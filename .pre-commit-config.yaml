@@ -1,0 +1,63 @@
+# Pre-commit hooks for AgentCore Infrastructure
+#
+# Runs automated checks before commits to ensure code quality.
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.103.0
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-recursive
+        files: ^infrastructure/terraform/envs/dev/
+      - id: terraform_validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+        files: ^infrastructure/terraform/envs/dev/
+      - id: terraform_tflint
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+        files: ^infrastructure/terraform/envs/dev/
+      - id: terraform_docs
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+        files: ^infrastructure/terraform/envs/dev/
+
+  # Python linting and formatting with Ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.2
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+        exclude: ^infrastructure/terraform/custom-resources/
+      - id: ruff-format
+        types_or: [python, pyi]
+        exclude: ^infrastructure/terraform/custom-resources/
+
+  # Python type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --check-untyped-defs]
+        additional_dependencies:
+          - boto3-stubs
+          - types-pyyaml
+          - types-requests
+        files: ^(packages|agents/customer-support)/.*\.py$
+        exclude: ^agents/global-tools/

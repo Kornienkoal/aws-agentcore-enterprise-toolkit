@@ -1,0 +1,19 @@
+[project]
+name = "streamlit-app"
+version = "0.1.0"
+description = "Streamlit frontend for AgentCore customer support"
+requires-python = ">=3.13"
+
+dependencies = [
+    "streamlit>=1.40.0",
+    "requests>=2.32.0",
+    "boto3>=1.34.130",
+    "PyJWT[crypto]>=2.9.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

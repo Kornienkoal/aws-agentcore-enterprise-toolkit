@@ -1,0 +1,5 @@
+# Service Locator Gateway Tool Dependencies
+# Minimal dependencies for Lambda function
+
+# No external dependencies required for this tool
+# Standard library only (json)

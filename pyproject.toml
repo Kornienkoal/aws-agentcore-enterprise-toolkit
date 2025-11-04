@@ -1,0 +1,109 @@
+# Amazon Bedrock AgentCore Template - Workspace Root
+# UV workspace configuration for multi-agent projects
+
+[project]
+name = "bedrock-agentcore-template"
+version = "0.1.0"
+description = "Production-ready template for building Amazon Bedrock AgentCore agents"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "AWS", email = "aws@amazon.com" }
+]
+
+# Workspace-level shared dependencies
+dependencies = [
+    "boto3>=1.35.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
+    "requests>=2.32.0",
+    "aws-xray-sdk>=2.14.0",
+
+    # Bedrock AgentCore SDK (AWS official)
+    "bedrock-agentcore>=1.0.0",
+    "bedrock-agentcore-starter-toolkit>=0.1.26",
+
+    # Strands framework
+    "strands-agents>=0.1.0",
+    "strands-agents-tools>=0.1.0",
+
+    # MCP protocol
+    "mcp>=1.0.0",
+
+    # Streamlit UI
+    "streamlit>=1.40.0",
+]
+
+# Development dependencies for the entire workspace
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-playwright>=0.6.2",
+    "playwright>=1.50.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.0",
+    "boto3-stubs>=1.35.0",
+    "types-pyyaml>=6.0.0",
+    "types-requests>=2.32.0",
+    "pre-commit>=4.0.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/*",        # Shared libraries
+    "agents/*",          # Agent implementations
+    "frontend/*",        # Frontend applications (Streamlit UI)
+]
+
+[tool.uv.sources]
+# Make workspace packages available to all members
+agentcore-common = { workspace = true }
+agentcore-tools = { workspace = true }
+bedrock-agentcore-starter-toolkit = { git = "https://github.com/aws/bedrock-agentcore-starter-toolkit", rev = "main" }
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+# Mypy configuration
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Gradual typing
+disallow_incomplete_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false

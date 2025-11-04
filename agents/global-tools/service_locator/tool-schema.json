@@ -1,0 +1,26 @@
+{
+  "name": "service-locator",
+  "description": "Find authorized service centers by location. Returns a list of service centers with contact information and optional distance calculation.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "city": {
+        "type": "string",
+        "description": "City name for service center search"
+      },
+      "region": {
+        "type": "string",
+        "description": "State or region (optional, helps narrow results)"
+      },
+      "country": {
+        "type": "string",
+        "description": "Country code (ISO-3166 alpha-2, default: US)"
+      },
+      "max_results": {
+        "type": "integer",
+        "description": "Maximum number of results to return (default: 5, range: 1-10)"
+      }
+    },
+    "required": ["city"]
+  }
+}

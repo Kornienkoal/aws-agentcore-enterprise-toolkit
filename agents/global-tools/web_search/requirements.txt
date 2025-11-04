@@ -1,0 +1,7 @@
+# No external dependencies for mock implementation
+# Uses only Python standard library (json)
+
+# For production implementation, uncomment and install:
+# google-api-python-client>=2.0.0  # Google Custom Search API
+# tavily-python>=0.3.0              # Tavily AI Search API
+# duckduckgo-search>=4.0.0          # DuckDuckGo Search

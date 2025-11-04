@@ -1,0 +1,10 @@
+[project]
+name = "agentcore-global-tools"
+version = "0.1.0"
+description = "Global MCP tools shared across all agents"
+requires-python = ">=3.13"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

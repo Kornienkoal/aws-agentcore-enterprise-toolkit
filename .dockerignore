@@ -1,0 +1,73 @@
+# VCS
+.git
+.github
+
+# Python caches and venvs
+**/__pycache__/
+**/*.py[cod]
+.venv/
+venv/
+env/
+
+# Logs and temp
+**/*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Test and tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Environment files
+.env
+.env.*
+
+# Terraform
+.terraform/
+**/*.tfstate*
+**/terraform.tfvars*
+.terraform.lock.hcl
+
+# Node (defensive)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Docs (do not include docs in Docker build context)
+docs/
+
+# Global Docker ignore file used for AgentCore local builds
+.git
+.gitmodules
+.gitignore
+
+# Python caches
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+
+# Build outputs and virtualenvs
+**/dist/
+**/build/
+**/.venv/
+**/venv/
+**/.tox/
+
+# Tooling caches
+**/.mypy_cache/
+**/.ruff_cache/
+**/.pytest_cache/
+**/.coverage
+**/htmlcov/
+
+# OS cruft
+**/.DS_Store
+
+# Terraform state and cache directories
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate*

@@ -1,0 +1,21 @@
+%% Frontend (Streamlit)
+
+flowchart LR
+  subgraph User[User]
+    UI[Streamlit UI]
+  end
+
+  subgraph Cognito[Cognito]
+    UP[("User Pool")]
+    FE["Frontend Client (PKCE)"]
+  end
+
+  subgraph AgentCore[AgentCore]
+    RT[Agent Runtime]
+  end
+
+  UI -->|"Browser OAuth2 (PKCE)"| Cognito
+  UI -->|AWS SDK| RT
+
+  classDef aws fill:#f7fbff,stroke:#1f77b4,stroke-width:1px
+  class UP,FE,RT aws

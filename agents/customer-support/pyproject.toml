@@ -1,0 +1,12 @@
+# Customer Support Agent
+# Simplified for bedrock-agentcore-starter-toolkit deployment
+# Dependencies managed via requirements.txt for CodeBuild compatibility
+
+[project]
+name = "customer-support-agent"
+version = "0.1.0"
+description = "Customer support agent for product inquiries and troubleshooting"
+requires-python = ">=3.13"
+
+# Note: SDK deployment uses requirements.txt for CodeBuild ARM64 builds
+# UV workspace packages (agentcore-common, agentcore-tools) are included via requirements.txt export

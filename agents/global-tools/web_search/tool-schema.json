@@ -1,0 +1,18 @@
+{
+  "name": "web-search",
+  "description": "Search the internet for information. Returns a list of search results with titles, URLs, and snippets.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Search query string"
+      },
+      "max_results": {
+        "type": "integer",
+        "description": "Maximum number of results to return (default: 5, range: 1-10). Note: 'minimum' and 'maximum' JSON Schema keywords are not supported by Bedrock AgentCore API and must be validated in Lambda code."
+      }
+    },
+    "required": ["query"]
+  }
+}

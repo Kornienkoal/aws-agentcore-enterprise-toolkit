@@ -1,0 +1,4 @@
+boto3>=1.34.0
+aws-lambda-powertools>=2.31.0
+aws-xray-sdk>=2.14.0
+cfnresponse>=1.1.2

@@ -1,0 +1,165 @@
+# Warranty & Documentation Assistant Configuration
+#
+# This agent focuses on warranty checking, service center location,
+# and product documentation search. It shares infrastructure with other agents.
+# All infrastructure resource IDs are read from SSM Parameter Store.
+
+agent:
+  name: warranty-docs
+  namespace: agentcore  # Matches terraform var.agent_namespace
+  description: "Warranty and documentation assistant for checking warranty status, finding service centers, and searching product documentation"
+  version: "1.0.0"
+
+# Environment Configuration
+environment:
+  name: dev
+  region: us-east-1
+
+# Model Configuration (Agent-specific)
+model:
+  provider: bedrock
+  # Using Claude Haiku 4.5 with US inference profile - marketplace subscription required
+  model_id: us.anthropic.claude-haiku-4-5-20251001-v1:0
+  temperature: 0.7
+  max_tokens: 4096
+
+# System Prompt (Agent-specific)
+system_prompt: |
+  You are a warranty and documentation assistant specializing in helping customers check warranty status,
+  locate authorized service centers, and find product documentation.
+
+  You have access to the following tools:
+
+  Gateway Tools (shared):
+  - check-warranty-status: Check warranty coverage for products using product ID
+  - service-locator: Find authorized service centers by city/region
+  - web-search: Search the web for additional product information
+
+  Local Tools:
+  - get_product_info: Retrieve product specifications and warranty details
+  - search_documentation: Search internal product documentation and knowledge base
+  - list_compatible_accessories: Find compatible accessories for a product
+  - save_user_preference: Save user preferences like contact email or language
+
+  Workflow for warranty inquiries:
+  1. Get product details using get_product_info if needed
+  2. Check warranty status using check-warranty-status
+  3. If warranty service needed, use service-locator to find nearby service centers
+  4. Use search_documentation to find relevant guides (warranty claim process, setup, troubleshooting)
+
+  Be professional, clear, and helpful. Always explain warranty terms clearly.
+  If you don't know something, say so and suggest contacting support directly.
+
+# Gateway Configuration (from infrastructure/terraform/modules/gateway)
+# These values are read from SSM - populated by Terraform
+gateway:
+  # Read from: /agentcore/dev/gateway/gateway_id
+  gateway_id: ${SSM:/agentcore/dev/gateway/gateway_id}
+
+  # Read from: /agentcore/dev/gateway/invoke_url
+  api_url: ${SSM:/agentcore/dev/gateway/invoke_url}
+
+  # Gateway tools that this agent can use
+  # Note: These must match MCP tool names registered in Gateway
+  allowed_tools:
+    - check-warranty-status
+    - service-locator
+    - web-search
+
+# Memory Configuration (from infrastructure/terraform/modules/memory)
+memory:
+  enabled: true
+
+  # Read from: /agentcore/dev/memory/memory_id
+  memory_id: ${SSM:/agentcore/dev/memory/memory_id}
+
+  # Memory strategies enabled
+  # Read from: /agentcore/dev/memory/enabled_strategies
+  strategies:
+    - USER_PREFERENCE
+    - SEMANTIC
+
+  # TTL for memories (days)
+  ttl_days: 30
+
+# Identity Configuration (from infrastructure/terraform/modules/identity)
+# For M2M authentication (if needed for Gateway authorization)
+identity:
+  # Read from: /agentcore/dev/identity/pool_id
+  cognito_pool_id: ${SSM:/agentcore/dev/identity/pool_id}
+
+  # Read from: /agentcore/dev/identity/machine_client_id
+  client_id: ${SSM:/agentcore/dev/identity/machine_client_id}
+
+  # Read from: /agentcore/dev/identity/client_secret (SecureString)
+  client_secret: ${SSM:/agentcore/dev/identity/client_secret}
+
+  # Read from: /agentcore/dev/identity/domain
+  cognito_domain: ${SSM:/agentcore/dev/identity/domain}
+
+# Runtime Configuration (from infrastructure/terraform/modules/runtime)
+runtime:
+  # Read from: /agentcore/dev/runtime/execution_role_arn
+  execution_role_arn: ${SSM:/agentcore/dev/runtime/execution_role_arn}
+
+  # Read from: /agentcore/dev/runtime/log_group_name
+  log_group: ${SSM:/agentcore/dev/runtime/log_group_name}
+
+  # Read from: /agentcore/dev/runtime/xray_enabled
+  xray_enabled: ${SSM:/agentcore/dev/runtime/xray_enabled}
+
+  # Region for boto3 clients
+  region: us-east-1
+
+# Observability Configuration (from infrastructure/terraform/modules/observability)
+observability:
+  enabled: true
+  cloudwatch_logs: true
+
+  # Read from: /agentcore/dev/observability/xray_enabled
+  xray_tracing: ${SSM:/agentcore/dev/observability/xray_enabled}
+
+  # Read from: /agentcore/dev/observability/metrics_namespace
+  metrics_namespace: ${SSM:/agentcore/dev/observability/metrics_namespace}
+
+  # Logging configuration
+  log_level: INFO
+  structured_logging: true
+
+# Agent-Specific Tools (local to this agent)
+tools:
+  # Local tools defined in agents/warranty-docs/tools/
+  local:
+    - module: tools.product_tools
+      functions:
+        - get_product_info
+        - search_documentation
+        - list_compatible_accessories
+
+    - module: tools.preferences
+      functions:
+        - save_user_preference
+
+  # Gateway tools (shared Lambda MCP tools)
+  # These are invoked via the Gateway client with MCP protocol
+  gateway_targets:
+    - name: check-warranty-status
+      description: "Check product warranty status by product ID"
+      required_params:
+        - product_id
+
+    - name: service-locator
+      description: "Find authorized service centers by location"
+      required_params:
+        - city
+
+    - name: web-search
+      description: "Search the web for product information"
+      required_params:
+        - query
+
+# Usage Notes:
+# 1. All ${SSM:...} placeholders are resolved at runtime by agentcore-common
+# 2. Infrastructure must be deployed before agent deployment
+# 3. Agent reads this config file from agent-config/warranty-docs.yaml
+# 4. Gateway tool names use hyphens (MCP convention), directory names use underscores
