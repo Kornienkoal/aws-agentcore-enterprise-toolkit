@@ -1,0 +1,25 @@
+%% Agent Runtime (Customer Support)
+
+flowchart LR
+  subgraph Runtime [Agent Runtime]
+    Entry["Agent Entry (runtime.py)"]
+    Role[Execution IAM Role]
+    Logs["/CW Log Group/"]
+  end
+
+  subgraph Bedrock [Amazon Bedrock]
+    FM[Foundation Models]
+    AC[AgentCore]
+    MEM[("Memory Service")]
+  end
+
+  SSM[("SSM /agentcore/{env}/*")]
+
+  Entry -->|uses| Role
+  Role -->|InvokeModel*| FM
+  Entry -->|read config| SSM
+  Entry -->|Memory APIs| MEM
+  Role --> Logs
+
+  classDef aws fill:#f7fbff,stroke:#1f77b4,stroke-width:1px
+  class Role,Logs,FM,AC,MEM,SSM aws

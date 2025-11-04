@@ -1,0 +1,55 @@
+%% Infra Overview — AgentCore (C4/C2-ish)
+%% Render with Mermaid CLI or in GitHub preview
+
+graph TD
+  subgraph Identity [Cognito Identity]
+    UP[("User Pool")]
+    M2M["App Client (client_credentials)"]
+    FE["Frontend Client (code + PKCE)"]
+  end
+
+  subgraph Gateway [Bedrock AgentCore Gateway]
+    GW[("Gateway")]
+    GRole[Gateway IAM Role]
+  end
+
+  subgraph Tools [Global MCP Tools]
+    T1[check_warranty Lambda]
+    T2[web_search Lambda]
+  end
+
+  subgraph Runtime [Agent Runtime]
+    RRole[Execution IAM Role]
+    Logs["/CW Log Group/"]
+  end
+
+  subgraph Memory [Bedrock AgentCore Memory]
+    MEM[("Memory Service")]
+  end
+
+  subgraph Observability [Observability]
+    CW[("CloudWatch")]
+    XR[("X-Ray")]
+  end
+
+  UP --> M2M
+  UP --> FE
+
+  RRole -->|Invoke| GW
+  GW -->|Invoke Tool| T1
+  GW -->|Invoke Tool| T2
+
+  RRole -->|Read| MEM
+
+  RRole --> Logs
+  T1 --> CW
+  T2 --> CW
+  GW --> CW
+
+  RRole --> XR
+  T1 --> XR
+  T2 --> XR
+  GW --> XR
+
+  classDef aws fill:#f7fbff,stroke:#1f77b4,stroke-width:1px
+  class UP,M2M,FE,GW,GRole,T1,T2,RRole,Logs,MEM,CW,XR aws

@@ -1,0 +1,32 @@
+%% Gateway + MCP Tools
+
+flowchart LR
+  subgraph Identity [Cognito]
+    UP[("User Pool")]
+    M2M["App Client (M2M)"]
+  end
+
+  subgraph Gateway [Bedrock AgentCore Gateway]
+    GW[("Gateway")]
+    GRole[Gateway IAM Role]
+  end
+
+  subgraph Tools [Global Tool Lambdas]
+    TW1[check-warranty Lambda]
+    TW2[web-search Lambda]
+  end
+
+  subgraph Provisioner [Targets Provisioner Lambda]
+    TP[Register Targets]
+  end
+
+  SSM[("SSM /agentcore/{env}/gateway/*")]
+
+  TP -->|reads gateway_id| SSM
+  TP -->|create/update targets| GW
+  GW -->|invoke| TW1
+  GW -->|invoke| TW2
+  GRole -->|permits| GW
+
+  classDef aws fill:#f7fbff,stroke:#1f77b4,stroke-width:1px
+  class UP,M2M,GW,GRole,TW1,TW2,TP,SSM aws

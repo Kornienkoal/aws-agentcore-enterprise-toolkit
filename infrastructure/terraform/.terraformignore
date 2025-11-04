@@ -1,0 +1,32 @@
+# Ignore common non-source and local-only files in Terraform module contexts
+.git/
+.github/
+.terraform/
+.terraform.lock.hcl
+
+# State and vars
+**/*.tfstate*
+**/terraform.tfvars
+**/terraform.tfvars.json
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+.history/
+
+# Python artifacts (for custom resources/tests alongside modules)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Archives
+*.zip
+*.tar.gz
+*.tgz
+
+# Tests and docs not needed in module packaging
+tests/
+docs/

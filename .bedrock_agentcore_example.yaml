@@ -1,0 +1,107 @@
+---
+# Example configuration for the Bedrock AgentCore CLI.
+#
+# CRITICAL: This file demonstrates the correct configuration for agents using
+# Terraform-provisioned infrastructure. DO NOT use SDK auto-created roles.
+#
+# Setup Instructions:
+# 1. Deploy infrastructure: cd infrastructure/terraform/envs/dev && terraform apply
+# 2. Copy this file: cp .bedrock_agentcore_example.yaml .bedrock_agentcore.yaml
+# 3. Get your Terraform-provisioned execution role ARN:
+#    aws ssm get-parameter --name /agentcore/dev/runtime/execution_role_arn --query 'Parameter.Value' --output text
+# 4. Get your memory ID:
+#    aws ssm get-parameter --name /agentcore/dev/memory/memory_id --query 'Parameter.Value' --output text
+# 5. Replace placeholders below with actual values
+# 6. Set execution_role_auto_create: false (REQUIRED - we use Terraform roles)
+#
+# IMPORTANT: After first deployment, .bedrock_agentcore.yaml is auto-updated by the CLI.
+# Make it read-only to prevent accidental changes: chmod 444 .bedrock_agentcore.yaml
+
+default_agent: warranty_docs
+
+agents:
+  warranty_docs:
+    name: warranty_docs
+    entrypoint: /ABSOLUTE/PATH/TO/REPO/agents/warranty-docs/runtime.py
+    platform: linux/arm64
+    container_runtime: docker
+    source_path: /ABSOLUTE/PATH/TO/REPO
+    aws:
+      execution_role: arn:aws:iam::<account-id>:role/agentcore-runtime-<env>-execution-role
+      execution_role_auto_create: false
+      account: '<account-id>'
+      region: <aws-region>
+      ecr_repository: <account-id>.dkr.ecr.<aws-region>.amazonaws.com/bedrock-agentcore-warranty_docs
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: warranty_docs-XXXXXXXXXX
+      agent_arn: arn:aws:bedrock-agentcore:<aws-region>:<account-id>:runtime/warranty_docs-XXXXXXXXXX
+      agent_session_id: 00000000-0000-0000-0000-000000000000
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: STM_ONLY
+      memory_id: AgentcoreMemoryDev-XXXXXXXXXX
+      memory_arn: arn:aws:bedrock-agentcore:<aws-region>:<account-id>:memory/AgentcoreMemoryDev-XXXXXXXXXX
+      memory_name: AgentcoreMemoryDev
+      event_expiry_days: 90
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: false
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
+
+  customer_support:
+    name: customer_support
+    entrypoint: /ABSOLUTE/PATH/TO/REPO/agents/customer-support/runtime.py
+    platform: linux/arm64
+    container_runtime: docker
+    source_path: /ABSOLUTE/PATH/TO/REPO
+    aws:
+      execution_role: arn:aws:iam::<account-id>:role/agentcore-runtime-<env>-execution-role
+      execution_role_auto_create: false
+      account: '<account-id>'
+      region: <aws-region>
+      ecr_repository: <account-id>.dkr.ecr.<aws-region>.amazonaws.com/bedrock-agentcore-customer_support
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: customer_support-XXXXXXXXXX
+      agent_arn: arn:aws:bedrock-agentcore:<aws-region>:<account-id>:runtime/customer_support-XXXXXXXXXX
+      agent_session_id: 00000000-0000-0000-0000-000000000000
+    codebuild:
+      project_name: null
+      execution_role: null
+      source_bucket: null
+    memory:
+      mode: STM_ONLY
+      memory_id: AgentcoreMemoryDev-XXXXXXXXXX
+      memory_arn: arn:aws:bedrock-agentcore:<aws-region>:<account-id>:memory/AgentcoreMemoryDev-XXXXXXXXXX
+      memory_name: AgentcoreMemoryDev
+      event_expiry_days: 90
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: false
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null

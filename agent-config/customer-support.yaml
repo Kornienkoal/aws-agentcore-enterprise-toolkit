@@ -1,0 +1,137 @@
+# Customer Support Agent Configuration
+#
+# This agent uses the shared AgentCore infrastructure deployed via Terraform.
+# All infrastructure resource IDs are read from SSM Parameter Store.
+
+agent:
+  name: customer-support
+  namespace: agentcore  # Matches terraform var.agent_namespace
+  description: "Customer support agent for product inquiries and troubleshooting"
+  version: "1.0.0"
+
+# Environment Configuration
+environment:
+  name: dev
+  region: us-east-1
+
+# Model Configuration (Agent-specific)
+model:
+  provider: bedrock
+  # Using Claude Haiku 4.5 with US inference profile - marketplace subscription required
+  model_id: us.anthropic.claude-haiku-4-5-20251001-v1:0
+  temperature: 0.7
+  max_tokens: 4096
+
+# System Prompt (Agent-specific)
+system_prompt: |
+  You are a helpful customer support assistant.
+
+  You have access to the following tools:
+  - check-warranty-status: Check warranty status for products using product IDs
+  - web-search: Search the web for product information and troubleshooting guides
+  - get_product_info: Get detailed product specifications
+  - search_documentation: Search internal product documentation
+
+  When a customer asks about warranty, ALWAYS use the check_warranty tool.
+  When you need current information or troubleshooting steps, use web_search.
+  Be friendly, professional, and helpful. If you don't know something, say so.
+
+# Gateway Configuration (from infrastructure/terraform/modules/gateway)
+# These values are read from SSM - populated by Terraform
+gateway:
+  # Read from: /agentcore/dev/gateway/gateway_id
+  gateway_id: ${SSM:/agentcore/dev/gateway/gateway_id}
+
+  # Read from: /agentcore/dev/gateway/invoke_url
+  api_url: ${SSM:/agentcore/dev/gateway/invoke_url}
+
+  # Gateway tools that this agent can use
+  # Note: These must match tool names registered in Gateway
+  allowed_tools:
+    - check-warranty-status
+    - web-search
+
+# Memory Configuration (from infrastructure/terraform/modules/memory)
+memory:
+  enabled: true
+
+  # Read from: /agentcore/dev/memory/memory_id
+  memory_id: ${SSM:/agentcore/dev/memory/memory_id}
+
+  # Memory strategies enabled
+  # Read from: /agentcore/dev/memory/enabled_strategies
+  strategies:
+    - USER_PREFERENCE
+    - SEMANTIC
+
+  # TTL for memories (days)
+  ttl_days: 30
+
+# Identity Configuration (from infrastructure/terraform/modules/identity)
+# For M2M authentication (if needed for Gateway authorization)
+identity:
+  # Read from: /agentcore/dev/identity/pool_id
+  cognito_pool_id: ${SSM:/agentcore/dev/identity/pool_id}
+
+  # Read from: /agentcore/dev/identity/machine_client_id
+  client_id: ${SSM:/agentcore/dev/identity/machine_client_id}
+
+  # Read from: /agentcore/dev/identity/client_secret (SecureString)
+  client_secret: ${SSM:/agentcore/dev/identity/client_secret}
+
+  # Read from: /agentcore/dev/identity/domain
+  cognito_domain: ${SSM:/agentcore/dev/identity/domain}
+
+# Runtime Configuration (from infrastructure/terraform/modules/runtime)
+runtime:
+  # Read from: /agentcore/dev/runtime/execution_role_arn
+  execution_role_arn: ${SSM:/agentcore/dev/runtime/execution_role_arn}
+
+  # Read from: /agentcore/dev/runtime/log_group_name
+  log_group: ${SSM:/agentcore/dev/runtime/log_group_name}
+
+  # Read from: /agentcore/dev/runtime/xray_enabled
+  xray_enabled: ${SSM:/agentcore/dev/runtime/xray_enabled}
+
+# Observability Configuration (from infrastructure/terraform/modules/observability)
+observability:
+  enabled: true
+  cloudwatch_logs: true
+
+  # Read from: /agentcore/dev/observability/xray_enabled
+  xray_tracing: ${SSM:/agentcore/dev/observability/xray_enabled}
+
+  # Read from: /agentcore/dev/observability/metrics_namespace
+  metrics_namespace: ${SSM:/agentcore/dev/observability/metrics_namespace}
+
+  # Logging configuration
+  log_level: INFO
+  structured_logging: true
+
+# Agent-Specific Tools (local to this agent)
+tools:
+  # Local tools defined in agents/customer-support/tools/
+  local:
+    - module: tools.product_tools
+      functions:
+        - get_product_info
+        - search_documentation
+
+  # Gateway tools (shared Lambda MCP tools)
+  # These are invoked via the Gateway client
+  gateway_targets:
+    - name: check-warranty-status
+      description: "Check product warranty status"
+      required_params:
+        - product_id
+
+    - name: web-search
+      description: "Search the web for information"
+      required_params:
+        - query
+
+# Usage Notes:
+# 1. All ${SSM:...} placeholders are resolved at runtime by agentcore-common
+# 2. Infrastructure must be deployed before agent deployment
+# 3. Agent reads this config file from agent-config/customer-support.yaml
+# 4. Deploy agent with: ./scripts/deploy-agent.sh customer-support

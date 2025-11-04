@@ -1,0 +1,18 @@
+# AgentCore Tools - Tool Integration Library
+# Gateway client, Memory helpers
+
+[project]
+name = "agentcore-tools"
+version = "0.1.0"
+description = "Tool integration library for Amazon Bedrock AgentCore"
+requires-python = ">=3.13"
+
+dependencies = [
+    "agentcore-common",
+    "boto3>=1.35.0",
+    "bedrock-agentcore>=0.1.7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

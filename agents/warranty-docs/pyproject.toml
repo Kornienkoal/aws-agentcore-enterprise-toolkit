@@ -1,0 +1,12 @@
+# Warranty & Docs Agent
+# Simplified for bedrock-agentcore-starter-toolkit deployment
+# Dependencies managed via requirements.txt for CodeBuild compatibility
+
+[project]
+name = "warranty-docs-agent"
+version = "0.1.0"
+description = "Warranty checking and documentation assistant for product support"
+requires-python = ">=3.13"
+
+# Note: SDK deployment uses requirements.txt for CodeBuild ARM64 builds
+# UV workspace packages (agentcore-common, agentcore-tools) are included via requirements.txt export
