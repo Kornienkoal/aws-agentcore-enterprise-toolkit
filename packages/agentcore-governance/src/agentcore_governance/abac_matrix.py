@@ -100,3 +100,53 @@ def generate_default_abac_matrix() -> dict[str, Any]:
     ]
 
     return export_abac_matrix(default_attributes)
+
+
+def export_abac_csv_file(records: Iterable[Mapping[str, str]], file_path: str) -> dict[str, Any]:
+    """Export ABAC matrix directly to CSV file (T083 integration).
+
+    Provides file-based export for integration with external tools and reporting.
+
+    Args:
+        records: Attribute records with ABAC metadata
+        file_path: Target file path for CSV export
+
+    Returns:
+        Export summary with path, record count, and status
+    """
+    attributes = list(records)
+
+    try:
+        with open(file_path, "w", newline="") as csvfile:
+            fieldnames = ["attribute", "source", "potential_use", "collection_method"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+            for attr in attributes:
+                writer.writerow(
+                    {
+                        "attribute": attr.get("attribute", ""),
+                        "source": attr.get("source", ""),
+                        "potential_use": attr.get("potential_use", ""),
+                        "collection_method": attr.get("collection_method", ""),
+                    }
+                )
+
+        logger.info(f"Exported ABAC matrix to {file_path} ({len(attributes)} records)")
+
+        return {
+            "status": "success",
+            "file_path": file_path,
+            "record_count": len(attributes),
+            "timestamp": __import__("datetime")
+            .datetime.now(__import__("datetime").UTC)
+            .isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to export ABAC matrix to {file_path}: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "file_path": file_path,
+            "error": str(e),
+        }

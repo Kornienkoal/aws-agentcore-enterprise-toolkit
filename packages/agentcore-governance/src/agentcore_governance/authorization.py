@@ -130,3 +130,67 @@ def clear_authorization_store() -> None:
     global _authorization_store, _authorization_history
     _authorization_store = {}
     _authorization_history = {}
+
+
+def cleanup_deprecated_tools(
+    tool_id: str,
+    deprecation_date: str | None = None,
+    notify_agents: bool = True,
+) -> dict[str, Any]:
+    """Remove deprecated tool from all agent authorizations (T082).
+
+    Implements lifecycle cleanup for tools that are deprecated or removed.
+    Optionally records deprecation notice for affected agents.
+
+    Args:
+        tool_id: Tool identifier to deprecate and remove
+        deprecation_date: ISO 8601 date when tool was deprecated
+        notify_agents: Whether to log notifications for affected agents
+
+    Returns:
+        Cleanup summary with affected agents and removal count
+    """
+    affected_agents = []
+    removal_count = 0
+
+    for agent_id, tools in _authorization_store.items():
+        if tool_id in tools:
+            affected_agents.append(agent_id)
+            tools.remove(tool_id)
+            removal_count += 1
+
+            # Record in history
+            change_record = {
+                "timestamp": datetime.now(UTC).isoformat(),
+                "agent_id": agent_id,
+                "added": [],
+                "removed": [tool_id],
+                "unchanged": tools.copy(),
+                "reason": f"Tool deprecated: {tool_id}",
+                "total_before": len(tools) + 1,
+                "total_after": len(tools),
+                "deprecation_date": deprecation_date,
+            }
+
+            if agent_id not in _authorization_history:
+                _authorization_history[agent_id] = []
+            _authorization_history[agent_id].append(change_record)
+
+            if notify_agents:
+                logger.warning(
+                    f"Deprecated tool {tool_id} removed from agent {agent_id} authorization"
+                )
+
+    cleanup_summary = {
+        "tool_id": tool_id,
+        "deprecation_date": deprecation_date or datetime.now(UTC).isoformat(),
+        "affected_agents": affected_agents,
+        "removal_count": removal_count,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+    logger.info(
+        f"Completed cleanup for deprecated tool {tool_id}: removed from {removal_count} agent(s)"
+    )
+
+    return cleanup_summary

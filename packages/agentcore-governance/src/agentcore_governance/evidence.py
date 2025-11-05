@@ -11,30 +11,51 @@ from agentcore_governance import integrity
 
 logger = logging.getLogger(__name__)
 
+# In-memory event store for testing (in production, query CloudWatch Logs)
+_event_store: list[dict[str, Any]] = []
+
 
 def construct_audit_event(
     event_type: str,
     correlation_id: str,
-    principal_chain: list[str],
-    outcome: str,
+    principal_chain: list[str] | None = None,
+    outcome: str = "success",
     latency_ms: int = 0,
     additional_fields: dict[str, Any] | None = None,
+    # Alternative signature for simpler test cases
+    principal_id: str | None = None,
+    action: str | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Construct a standardized audit event record.
 
     Args:
         event_type: Type of event (agent_invocation, tool_invocation, etc.)
         correlation_id: Correlation identifier for tracing
-        principal_chain: List of principals involved in the operation
+        principal_chain: List of principals involved (or use principal_id)
         outcome: Result of the operation (success, failure, denied, etc.)
         latency_ms: Operation latency in milliseconds
         additional_fields: Optional extra fields to include
+        principal_id: Single principal (alternative to principal_chain)
+        action: Action performed (stored in additional_fields)
+        metadata: Metadata (stored in additional_fields)
 
     Returns:
         Audit event dictionary with integrity hash
     """
     event_id = uuid.uuid4().hex
     timestamp = datetime.now(UTC).isoformat()
+
+    # Handle principal_id alternative signature
+    if principal_chain is None:
+        principal_chain = [principal_id] if principal_id else []
+
+    # Merge metadata and additional_fields
+    fields = additional_fields.copy() if additional_fields else {}
+    if metadata:
+        fields.update(metadata)
+    if action and "action" not in fields:
+        fields["action"] = action
 
     event = {
         "id": event_id,
@@ -46,8 +67,15 @@ def construct_audit_event(
         "latency_ms": latency_ms,
     }
 
-    if additional_fields:
-        event.update(additional_fields)
+    # Add principal_id to top level for test compatibility
+    if principal_id:
+        event["principal_id"] = principal_id
+
+    # Add fields
+    if fields:
+        event.update(fields)
+
+    # Compute integrity hash
 
     # Compute integrity hash over core fields
     hash_fields = [
@@ -292,6 +320,11 @@ def _query_events_by_correlation(correlation_id: str) -> list[dict[str, Any]]:
         List of matching events from all sources
     """
     events = []
+
+    # Query in-memory event store (for testing)
+    for event in _event_store:
+        if event.get("correlation_id") == correlation_id:
+            events.append(event)
 
     # Query decision registry
     try:

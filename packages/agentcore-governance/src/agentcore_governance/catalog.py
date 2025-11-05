@@ -278,3 +278,49 @@ def export_catalog_snapshot(
         }
 
     return snapshot
+
+
+def schedule_quarterly_attestation(
+    owner: str, principals: list[dict[str, object]]
+) -> dict[str, Any]:
+    """Schedule quarterly attestation reminder for principal owner (FR-018, T081).
+
+    This is a stub implementation that demonstrates attestation workflow.
+    In production, this would integrate with notification systems (SNS, email)
+    and track attestation completion status.
+
+    Args:
+        owner: Owner identifier to receive attestation request
+        principals: List of principals requiring attestation
+
+    Returns:
+        Attestation record with scheduled date and principal summary
+    """
+    import uuid
+
+    attestation_id = uuid.uuid4().hex
+    scheduled_date = (datetime.now(UTC) + timedelta(days=90)).isoformat()
+
+    attestation_record = {
+        "attestation_id": attestation_id,
+        "owner": owner,
+        "scheduled_date": scheduled_date,
+        "status": "scheduled",
+        "principals_count": len(principals),
+        "principals": [
+            {
+                "id": p["id"],
+                "type": p.get("type", "unknown"),
+                "environment": p.get("environment", "unknown"),
+            }
+            for p in principals
+        ],
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+
+    logger.info(
+        f"Scheduled attestation {attestation_id} for owner {owner} "
+        f"({len(principals)} principals) on {scheduled_date}"
+    )
+
+    return attestation_record

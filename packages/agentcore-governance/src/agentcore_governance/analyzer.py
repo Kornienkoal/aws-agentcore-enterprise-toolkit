@@ -213,3 +213,168 @@ def enrich_principals_with_scores(
         principal["risk_rating"] = compute_risk_rating(principal)
 
     return principals
+
+
+def generate_policy_change_report(
+    before_snapshot: list[dict[str, Any]],
+    after_snapshot: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Generate differential report comparing two policy snapshots (FR-019).
+
+    Identifies added, removed, and modified principals along with
+    changes in permissions, scores, and risk ratings.
+
+    Args:
+        before_snapshot: Earlier catalog snapshot with principals
+        after_snapshot: Later catalog snapshot with principals
+
+    Returns:
+        Differential report with changes, added, removed principals
+    """
+    # Build ID->principal maps
+    before_map = {p["id"]: p for p in before_snapshot}
+    after_map = {p["id"]: p for p in after_snapshot}
+
+    before_ids = set(before_map.keys())
+    after_ids = set(after_map.keys())
+
+    # Detect changes
+    added = sorted(after_ids - before_ids)
+    removed = sorted(before_ids - after_ids)
+    potentially_modified = sorted(before_ids & after_ids)
+
+    modifications = []
+    for pid in potentially_modified:
+        before_principal = before_map[pid]
+        after_principal = after_map[pid]
+
+        changes: dict[str, Any] = {"principal_id": pid}
+
+        # Check score changes
+        before_score = before_principal.get("least_privilege_score", 100.0)
+        after_score = after_principal.get("least_privilege_score", 100.0)
+        if abs(before_score - after_score) > 1.0:
+            changes["score_change"] = {
+                "before": before_score,
+                "after": after_score,
+                "delta": after_score - before_score,
+            }
+
+        # Check risk rating changes
+        before_risk = before_principal.get("risk_rating", "LOW")
+        after_risk = after_principal.get("risk_rating", "LOW")
+        if before_risk != after_risk:
+            changes["risk_rating_change"] = {"before": before_risk, "after": after_risk}
+
+        # Check policy summary changes
+        before_summary = before_principal.get("policy_summary", {})
+        after_summary = after_principal.get("policy_summary", {})
+        if isinstance(before_summary, dict) and isinstance(after_summary, dict):
+            before_actions = before_summary.get("action_count", 0)
+            after_actions = after_summary.get("action_count", 0)
+            if before_actions != after_actions:
+                changes["action_count_change"] = {
+                    "before": before_actions,
+                    "after": after_actions,
+                    "delta": after_actions - before_actions,
+                }
+
+        # Only record if there are actual changes
+        if len(changes) > 1:  # More than just principal_id
+            modifications.append(changes)
+
+    return {
+        "added_principals": [after_map[pid] for pid in added],
+        "removed_principals": [before_map[pid] for pid in removed],
+        "modified_principals": modifications,
+        "summary": {
+            "added_count": len(added),
+            "removed_count": len(removed),
+            "modified_count": len(modifications),
+            "unchanged_count": len(potentially_modified) - len(modifications),
+        },
+    }
+
+
+def aggregate_risk_scores(principals: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate enterprise-wide risk metrics from principal data (FR-021).
+
+    Computes overall risk distribution, average scores, and identifies
+    high-risk principals requiring attention.
+
+    Args:
+        principals: List of enriched principal records
+
+    Returns:
+        Aggregated risk metrics with distribution and recommendations
+    """
+    if not principals:
+        return {
+            "total_principals": 0,
+            "risk_distribution": {"HIGH": 0, "MODERATE": 0, "LOW": 0},
+            "average_least_privilege_score": 100.0,
+            "high_risk_principals": [],
+            "recommendations": [],
+        }
+
+    # Risk distribution
+    risk_counts = {"HIGH": 0, "MODERATE": 0, "LOW": 0}
+    score_sum = 0.0
+    high_risk_principals = []
+
+    for principal in principals:
+        risk_rating = principal.get("risk_rating", "LOW")
+        if risk_rating in risk_counts:
+            risk_counts[risk_rating] += 1
+
+        score = principal.get("least_privilege_score", 100.0)
+        score_sum += score
+
+        # Collect high-risk details
+        if risk_rating == "HIGH":
+            high_risk_principals.append(
+                {
+                    "id": principal["id"],
+                    "type": principal.get("type", "unknown"),
+                    "risk_rating": risk_rating,
+                    "least_privilege_score": score,
+                    "inactive": principal.get("inactive", False),
+                    "wildcard_actions": (
+                        principal.get("policy_summary", {}).get("wildcard_actions", [])
+                        if isinstance(principal.get("policy_summary"), dict)
+                        else []
+                    ),
+                }
+            )
+
+    average_score = score_sum / len(principals)
+
+    # Generate recommendations
+    recommendations = []
+    high_risk_pct = (risk_counts["HIGH"] / len(principals)) * 100
+    if high_risk_pct > 10:
+        recommendations.append(
+            f"HIGH risk principals exceed 10% of total ({high_risk_pct:.1f}%). "
+            "Review and remediate excessive permissions."
+        )
+
+    if average_score < 70:
+        recommendations.append(
+            f"Average least-privilege score ({average_score:.1f}) below 70. "
+            "Consider narrowing permissions and reducing wildcards."
+        )
+
+    inactive_high_risk = [p for p in high_risk_principals if p.get("inactive")]
+    if inactive_high_risk:
+        recommendations.append(
+            f"{len(inactive_high_risk)} HIGH risk principals are inactive. "
+            "Consider revocation or archival."
+        )
+
+    return {
+        "total_principals": len(principals),
+        "risk_distribution": risk_counts,
+        "average_least_privilege_score": round(average_score, 2),
+        "high_risk_principals": high_risk_principals,
+        "recommendations": recommendations,
+    }

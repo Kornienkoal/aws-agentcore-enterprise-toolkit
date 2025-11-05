@@ -18,8 +18,11 @@ def list_decisions(
     effect: str | None = None,
     hours_back: int = 24,
     limit: int = 100,
+    resource_pattern: str | None = None,
+    action_pattern: str | None = None,
+    aggregate_by: str | None = None,
 ) -> dict[str, Any]:
-    """Handle GET /decisions request.
+    """Handle GET /decisions request with enhanced filtering and aggregation (T079).
 
     Retrieves policy decisions with optional filtering by subject and effect.
     Includes correlation tracing for audit trail reconstruction.
@@ -29,9 +32,12 @@ def list_decisions(
         effect: Optional decision effect filter (allow or deny)
         hours_back: Time window for query (default 24 hours)
         limit: Maximum number of results to return
+        resource_pattern: Optional resource pattern filter (substring match)
+        action_pattern: Optional action pattern filter (substring match)
+        aggregate_by: Optional aggregation field (subject_id, effect, resource)
 
     Returns:
-        Response with decisions array and query metadata
+        Response with decisions array and query metadata (with optional aggregations)
     """
     try:
         # Calculate time threshold
@@ -54,6 +60,18 @@ def list_decisions(
                 }
             decisions = [d for d in decisions if d.get("effect") == effect_lower]
 
+        # Apply resource pattern filter
+        if resource_pattern:
+            decisions = [
+                d for d in decisions if resource_pattern.lower() in d.get("resource", "").lower()
+            ]
+
+        # Apply action pattern filter
+        if action_pattern:
+            decisions = [
+                d for d in decisions if action_pattern.lower() in d.get("action", "").lower()
+            ]
+
         # Apply time filter
         decisions = [
             d
@@ -61,22 +79,39 @@ def list_decisions(
             if datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00")) >= cutoff
         ]
 
-        # Apply limit
-        decisions = decisions[:limit]
+        # Compute aggregations if requested
+        aggregations: dict[str, Any] = {}
+        if aggregate_by and aggregate_by in ("subject_id", "effect", "resource", "action"):
+            agg_map: dict[str, int] = {}
+            for decision in decisions:
+                key = str(decision.get(aggregate_by, "unknown"))
+                agg_map[key] = agg_map.get(key, 0) + 1
+            aggregations[f"by_{aggregate_by}"] = dict(sorted(agg_map.items()))
+
+        # Apply limit to result set
+        limited_decisions = decisions[:limit]
 
         # Sort by timestamp descending (most recent first)
-        decisions.sort(key=lambda x: x["timestamp"], reverse=True)
+        limited_decisions.sort(key=lambda x: x["timestamp"], reverse=True)
 
-        return {
-            "decisions": decisions,
-            "count": len(decisions),
+        response: dict[str, Any] = {
+            "decisions": limited_decisions,
+            "count": len(limited_decisions),
+            "total_matching": len(decisions),
             "filters": {
                 "subject_id": subject_id,
                 "effect": effect,
                 "hours_back": hours_back,
+                "resource_pattern": resource_pattern,
+                "action_pattern": action_pattern,
             },
             "status": 200,
         }
+
+        if aggregations:
+            response["aggregations"] = aggregations
+
+        return response
 
     except Exception as e:
         logger.error(f"Error listing decisions: {e}", exc_info=True)
