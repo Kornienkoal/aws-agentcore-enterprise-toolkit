@@ -2,14 +2,143 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Iterable, Mapping
+
+logger = logging.getLogger(__name__)
 
 
 def compute_least_privilege_score(policy_documents: Iterable[Mapping[str, object]]) -> float:
-    """Compute a placeholder least-privilege score from policy documents."""
-    raise NotImplementedError("Least-privilege scoring not yet implemented")
+    """Compute least-privilege score from policy documents.
+
+    Score ranges from 0 (worst) to 100 (best). Formula:
+    - Base score starts at 100
+    - Deduct 5 points per wildcard action
+    - Deduct 10 points per wildcard resource
+    - Bonus for narrow scoped resources
+
+    Args:
+        policy_documents: IAM policy documents (JSON format)
+
+    Returns:
+        Score from 0.0 to 100.0
+    """
+    score = 100.0
+    wildcard_action_count = 0
+    wildcard_resource_count = 0
+    narrow_resource_count = 0
+    total_statements = 0
+
+    for doc in policy_documents:
+        statements = doc.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+
+        for stmt in statements:
+            if stmt.get("Effect") != "Allow":
+                continue
+
+            total_statements += 1
+
+            # Check actions for wildcards
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+
+            for action in actions:
+                if "*" in str(action):
+                    wildcard_action_count += 1
+
+            # Check resource scope
+            resources = stmt.get("Resource", [])
+            if isinstance(resources, str):
+                resources = [resources]
+
+            for resource in resources:
+                res_str = str(resource)
+                if res_str == "*":
+                    wildcard_resource_count += 1
+                elif ":" in res_str and "*" not in res_str:
+                    narrow_resource_count += 1
+
+    # Apply penalties
+    score -= wildcard_action_count * 5
+    score -= wildcard_resource_count * 10
+
+    # Apply bonus for narrow resources (up to +10)
+    if total_statements > 0:
+        narrow_ratio = narrow_resource_count / total_statements
+        score += min(10, narrow_ratio * 10)
+
+    return max(0.0, min(100.0, score))
 
 
 def detect_orphan_principals(principals: Iterable[Mapping[str, object]]) -> list[Mapping[str, object]]:
-    """Identify principals that lack required ownership metadata."""
-    raise NotImplementedError("Orphan principal detection not yet implemented")
+    """Identify principals that lack required ownership metadata.
+
+    A principal is considered orphaned if:
+    - Missing 'owner' field or owner is 'unknown'
+    - Missing 'purpose' field or purpose is empty
+
+    Args:
+        principals: List of principal records
+
+    Returns:
+        List of orphaned principals
+    """
+    orphans = []
+
+    for principal in principals:
+        owner = principal.get("owner", "unknown").strip().lower()
+        purpose = principal.get("purpose", "").strip()
+
+        if owner in ("unknown", "", "none") or not purpose:
+            orphans.append(principal)
+            logger.info(f"Orphan detected: {principal.get('id')} (owner={owner}, purpose={bool(purpose)})")
+
+    return orphans
+
+
+def compute_risk_rating(principal: Mapping[str, object]) -> str:
+    """Compute risk rating based on policy footprint and usage patterns.
+
+    Args:
+        principal: Principal record with policy metadata
+
+    Returns:
+        Risk rating: LOW, MODERATE, or HIGH
+    """
+    # Extract risk factors
+    wildcard_actions = principal.get("wildcard_actions", [])
+    scope = principal.get("resource_scope_wideness", "NARROW")
+    inactive = principal.get("inactive", False)
+    least_privilege_score = principal.get("least_privilege_score", 100.0)
+
+    # Risk scoring
+    risk_score = 0
+
+    if len(wildcard_actions) > 5:
+        risk_score += 3
+    elif len(wildcard_actions) > 0:
+        risk_score += 1
+
+    if scope == "BROAD":
+        risk_score += 3
+    elif scope == "MODERATE":
+        risk_score += 1
+
+    if inactive:
+        risk_score += 2
+
+    if least_privilege_score < 50:
+        risk_score += 2
+    elif least_privilege_score < 80:
+        risk_score += 1
+
+    # Map to rating
+    if risk_score >= 6:
+        return "HIGH"
+    elif risk_score >= 3:
+        return "MODERATE"
+    else:
+        return "LOW"

@@ -34,23 +34,23 @@ Purpose: Establish governance package scaffold, baseline configuration files, an
 
 Purpose: Implement core shared services required by all user stories (catalog aggregation, classification loading, correlation, integrity, analyzer baseline).
 
-- [ ] T021 Implement principal catalog aggregation (IAM, SSM, tagging) `packages/agentcore-governance/src/agentcore_governance/catalog.py`
-- [ ] T022 Implement policy footprint summarizer (actions, wildcards, scope rating) `packages/agentcore-governance/src/agentcore_governance/catalog.py`
-- [ ] T023 Implement least privilege score computation logic `packages/agentcore-governance/src/agentcore_governance/analyzer.py`
-- [ ] T024 Implement orphan principal detector `packages/agentcore-governance/src/agentcore_governance/analyzer.py`
-- [ ] T025 Implement classification registry loader (YAML parse, validation) `packages/agentcore-governance/src/agentcore_governance/classification.py`
-- [ ] T026 Implement correlation ID generator and propagation helpers `packages/agentcore-governance/src/agentcore_governance/correlation.py`
-- [ ] T027 Implement integrity hash utility (deterministic concatenation + SHA256) `packages/agentcore-governance/src/agentcore_governance/integrity.py`
-- [ ] T028 Implement audit event construction helper `packages/agentcore-governance/src/agentcore_governance/evidence.py`
-- [ ] T029 Implement ABAC feasibility matrix exporter (Markdown + CSV) `packages/agentcore-governance/src/agentcore_governance/abac_matrix.py`
-- [ ] T030 Implement evidence pack generator (catalog + last 24h logs + conformance score) `packages/agentcore-governance/src/agentcore_governance/evidence.py`
-- [ ] T031 [P] Unit tests for catalog aggregation coverage `tests/unit/governance/test_catalog_aggregation.py`
-- [ ] T032 [P] Unit tests for analyzer scoring logic `tests/unit/governance/test_analyzer_scoring.py`
-- [ ] T033 [P] Unit tests for classification loader `tests/unit/governance/test_classification_loader.py`
-- [ ] T034 [P] Unit tests for correlation ID helper `tests/unit/governance/test_correlation.py`
-- [ ] T035 [P] Unit tests for integrity hash utility `tests/unit/governance/test_integrity.py`
-- [ ] T036 Integration test: evidence pack generation baseline `tests/integration/governance/test_evidence_pack.py`
-- [ ] T037 Integration test: ABAC matrix exporter output validation `tests/integration/governance/test_abac_matrix.py`
+- [X] T021 Implement principal catalog aggregation (IAM, SSM, tagging) `packages/agentcore-governance/src/agentcore_governance/catalog.py`
+- [X] T022 Implement policy footprint summarizer (actions, wildcards, scope rating) `packages/agentcore-governance/src/agentcore_governance/catalog.py`
+- [X] T023 Implement least privilege score computation logic `packages/agentcore-governance/src/agentcore_governance/analyzer.py`
+- [X] T024 Implement orphan principal detector `packages/agentcore-governance/src/agentcore_governance/analyzer.py`
+- [X] T025 Implement classification registry loader (YAML parse, validation) `packages/agentcore-governance/src/agentcore_governance/classification.py`
+- [X] T026 Implement correlation ID generator and propagation helpers `packages/agentcore-governance/src/agentcore_governance/correlation.py`
+- [X] T027 Implement integrity hash utility (deterministic concatenation + SHA256) `packages/agentcore-governance/src/agentcore_governance/integrity.py`
+- [X] T028 Implement audit event construction helper `packages/agentcore-governance/src/agentcore_governance/evidence.py`
+- [X] T029 Implement ABAC feasibility matrix exporter (Markdown + CSV) `packages/agentcore-governance/src/agentcore_governance/abac_matrix.py`
+- [X] T030 Implement evidence pack generator (catalog + last 24h logs + conformance score) `packages/agentcore-governance/src/agentcore_governance/evidence.py`
+- [X] T031 [P] Unit tests for catalog aggregation coverage `tests/unit/governance/test_catalog_aggregation.py`
+- [X] T032 [P] Unit tests for analyzer scoring logic `tests/unit/governance/test_analyzer_scoring.py`
+- [X] T033 [P] Unit tests for classification loader `tests/unit/governance/test_classification_loader.py`
+- [X] T034 [P] Unit tests for correlation ID helper `tests/unit/governance/test_correlation.py`
+- [X] T035 [P] Unit tests for integrity hash utility `tests/unit/governance/test_integrity.py`
+- [X] T036 Integration test: evidence pack generation baseline `tests/integration/governance/test_evidence_pack.py`
+- [X] T037 Integration test: ABAC matrix exporter output validation `tests/integration/governance/test_abac_matrix.py`
 
 ---
 ## Phase 3: User Story 1 (Inventory & Ownership Visibility) [Priority P1]
