@@ -88,14 +88,14 @@ Independent Test: Remove a tool via PUT endpoint → subsequent simulated invoca
 Goal: Static allowlist workflow with request, approval, expiry.
 Independent Test: Submit request → approve → restricted targets accessible; unapproved target denied.
 
-- [ ] T054 [US3] Implement `POST /integrations` request handler `packages/agentcore-governance/src/agentcore_governance/api/integration_handlers.py`
-- [ ] T055 [US3] Implement `POST /integrations/{integrationId}/approve` handler `packages/agentcore-governance/src/agentcore_governance/api/integration_handlers.py`
-- [ ] T056 [P] [US3] Implement integration registry (YAML or JSON) `packages/agentcore-governance/src/agentcore_governance/integrations.py`
-- [ ] T057 [US3] Implement expiry scheduling logic (mark status expired) `packages/agentcore-governance/src/agentcore_governance/integrations.py`
-- [ ] T058 [US3] Add audit events for request and approval `packages/agentcore-governance/src/agentcore_governance/evidence.py`
-- [ ] T059 [US3] Contract tests for integration endpoints `tests/integration/governance/test_integrations_endpoints.py`
-- [ ] T060 [US3] Denial path test (unapproved target access) `tests/integration/governance/test_integration_denial.py`
-- [ ] T061 [US3] Expiry scenario test `tests/integration/governance/test_integration_expiry.py`
+- [X] T054 [US3] Implement `POST /integrations` request handler `packages/agentcore-governance/src/agentcore_governance/api/integration_handlers.py`
+- [X] T055 [US3] Implement `POST /integrations/{integrationId}/approve` handler `packages/agentcore-governance/src/agentcore_governance/api/integration_handlers.py`
+- [X] T056 [P] [US3] Implement integration registry (YAML or JSON) `packages/agentcore-governance/src/agentcore_governance/integrations.py`
+- [X] T057 [US3] Implement expiry scheduling logic (mark status expired) `packages/agentcore-governance/src/agentcore_governance/integrations.py`
+- [X] T058 [US3] Add audit events for request and approval `packages/agentcore-governance/src/agentcore_governance/evidence.py`
+- [X] T059 [US3] Contract tests for integration endpoints `tests/integration/governance/test_integrations_endpoints.py`
+- [X] T060 [US3] Denial path test (unapproved target access) `tests/integration/governance/test_integration_denial.py`
+- [X] T061 [US3] Expiry scenario test `tests/integration/governance/test_integration_expiry.py`
 
 ---
 ## Phase 6: User Story 4 (Rapid Revocation) [Priority P2]

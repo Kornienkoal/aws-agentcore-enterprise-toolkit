@@ -192,3 +192,148 @@ def construct_authorization_decision_event(
     event["integrity_hash"] = integrity.compute_integrity_hash(hash_fields)
 
     return event
+
+
+def construct_integration_request_event(
+    integration_id: str,
+    name: str,
+    justification: str,
+    requested_targets: list[str],
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    """Construct an integration request audit event.
+
+    Args:
+        integration_id: Integration identifier
+        name: Integration name
+        justification: Request justification
+        requested_targets: List of requested target endpoints
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        Audit event dictionary with integration request details
+    """
+    event_id = str(uuid.uuid4())
+    correlation_id = correlation_id or str(uuid.uuid4())
+    timestamp = datetime.now(UTC).isoformat()
+
+    event = {
+        "id": event_id,
+        "event_type": "integration_request",
+        "timestamp": timestamp,
+        "correlation_id": correlation_id,
+        "integration_id": integration_id,
+        "integration_name": name,
+        "justification": justification,
+        "requested_targets": requested_targets,
+        "target_count": len(requested_targets),
+    }
+
+    # Compute integrity hash
+    hash_fields = [
+        event_id,
+        timestamp,
+        integration_id,
+        name,
+        justification,
+        "|".join(sorted(requested_targets)),
+    ]
+    event["integrity_hash"] = integrity.compute_integrity_hash(hash_fields)
+
+    logger.info(f"Integration request event: {integration_id} ({name})")
+    return event
+
+
+def construct_integration_approval_event(
+    integration_id: str,
+    approved_by: str,
+    approved_targets: list[str],
+    expiry_days: int | None,
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    """Construct an integration approval audit event.
+
+    Args:
+        integration_id: Integration identifier
+        approved_by: Identity of the approver
+        approved_targets: List of approved target endpoints
+        expiry_days: Optional expiry duration in days
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        Audit event dictionary with integration approval details
+    """
+    event_id = str(uuid.uuid4())
+    correlation_id = correlation_id or str(uuid.uuid4())
+    timestamp = datetime.now(UTC).isoformat()
+
+    event = {
+        "id": event_id,
+        "event_type": "integration_approval",
+        "timestamp": timestamp,
+        "correlation_id": correlation_id,
+        "integration_id": integration_id,
+        "approved_by": approved_by,
+        "approved_targets": approved_targets,
+        "target_count": len(approved_targets),
+        "expiry_days": expiry_days,
+    }
+
+    # Compute integrity hash
+    hash_fields = [
+        event_id,
+        timestamp,
+        integration_id,
+        approved_by,
+        "|".join(sorted(approved_targets)),
+        str(expiry_days or "none"),
+    ]
+    event["integrity_hash"] = integrity.compute_integrity_hash(hash_fields)
+
+    logger.info(f"Integration approval event: {integration_id} by {approved_by}")
+    return event
+
+
+def construct_integration_denial_event(
+    integration_id: str,
+    target: str,
+    reason: str,
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    """Construct an integration access denial audit event.
+
+    Args:
+        integration_id: Integration identifier
+        target: Target endpoint that was denied
+        reason: Denial reason
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        Audit event dictionary with integration denial details
+    """
+    event_id = str(uuid.uuid4())
+    correlation_id = correlation_id or str(uuid.uuid4())
+    timestamp = datetime.now(UTC).isoformat()
+
+    event = {
+        "id": event_id,
+        "event_type": "integration_access_denied",
+        "timestamp": timestamp,
+        "correlation_id": correlation_id,
+        "integration_id": integration_id,
+        "target": target,
+        "reason": reason,
+    }
+
+    # Compute integrity hash
+    hash_fields = [
+        event_id,
+        timestamp,
+        integration_id,
+        target,
+        reason,
+    ]
+    event["integrity_hash"] = integrity.compute_integrity_hash(hash_fields)
+
+    logger.warning(f"Integration access denied: {integration_id} -> {target}")
+    return event
