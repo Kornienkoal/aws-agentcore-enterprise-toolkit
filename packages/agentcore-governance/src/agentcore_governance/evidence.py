@@ -337,3 +337,153 @@ def construct_integration_denial_event(
 
     logger.warning(f"Integration access denied: {integration_id} -> {target}")
     return event
+
+
+def construct_revocation_request_event(
+    revocation_id: str,
+    subject_type: str,
+    subject_id: str,
+    scope: str,
+    reason: str,
+    initiated_by: str,
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    """Construct a revocation request audit event.
+
+    Args:
+        revocation_id: Revocation identifier
+        subject_type: Type of subject being revoked
+        subject_id: Subject identifier
+        scope: Revocation scope
+        reason: Revocation reason
+        initiated_by: Who initiated the revocation
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        Audit event dictionary with revocation request details
+    """
+    event_id = str(uuid.uuid4())
+    correlation_id = correlation_id or str(uuid.uuid4())
+    timestamp = datetime.now(UTC).isoformat()
+
+    event = {
+        "id": event_id,
+        "event_type": "revocation_request",
+        "timestamp": timestamp,
+        "correlation_id": correlation_id,
+        "revocation_id": revocation_id,
+        "subject_type": subject_type,
+        "subject_id": subject_id,
+        "scope": scope,
+        "reason": reason,
+        "initiated_by": initiated_by,
+    }
+
+    # Compute integrity hash
+    hash_fields = [
+        event_id,
+        timestamp,
+        revocation_id,
+        subject_type,
+        subject_id,
+        scope,
+        reason,
+        initiated_by,
+    ]
+    event["integrity_hash"] = integrity.compute_integrity_hash(hash_fields)
+
+    logger.info(f"Revocation request event: {revocation_id} ({subject_type}/{subject_id})")
+    return event
+
+
+def construct_revocation_propagated_event(
+    revocation_id: str,
+    latency_ms: int,
+    sla_met: bool,
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    """Construct a revocation propagation complete audit event.
+
+    Args:
+        revocation_id: Revocation identifier
+        latency_ms: Propagation latency in milliseconds
+        sla_met: Whether SLA was met
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        Audit event dictionary with revocation propagation details
+    """
+    event_id = str(uuid.uuid4())
+    correlation_id = correlation_id or str(uuid.uuid4())
+    timestamp = datetime.now(UTC).isoformat()
+
+    event = {
+        "id": event_id,
+        "event_type": "revocation_propagated",
+        "timestamp": timestamp,
+        "correlation_id": correlation_id,
+        "revocation_id": revocation_id,
+        "latency_ms": latency_ms,
+        "sla_met": sla_met,
+    }
+
+    # Compute integrity hash
+    hash_fields = [
+        event_id,
+        timestamp,
+        revocation_id,
+        str(latency_ms),
+        str(sla_met),
+    ]
+    event["integrity_hash"] = integrity.compute_integrity_hash(hash_fields)
+
+    logger.info(
+        f"Revocation propagated event: {revocation_id} latency={latency_ms}ms sla_met={sla_met}"
+    )
+    return event
+
+
+def construct_revocation_access_denied_event(
+    subject_type: str,
+    subject_id: str,
+    attempted_action: str,
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    """Construct a revocation access denial audit event.
+
+    Args:
+        subject_type: Type of subject that was denied
+        subject_id: Subject identifier
+        attempted_action: Action that was attempted
+        correlation_id: Optional correlation ID for tracing
+
+    Returns:
+        Audit event dictionary with revocation denial details
+    """
+    event_id = str(uuid.uuid4())
+    correlation_id = correlation_id or str(uuid.uuid4())
+    timestamp = datetime.now(UTC).isoformat()
+
+    event = {
+        "id": event_id,
+        "event_type": "revocation_access_denied",
+        "timestamp": timestamp,
+        "correlation_id": correlation_id,
+        "subject_type": subject_type,
+        "subject_id": subject_id,
+        "attempted_action": attempted_action,
+        "reason": "Subject has active revocation",
+    }
+
+    # Compute integrity hash
+    hash_fields = [
+        event_id,
+        timestamp,
+        subject_type,
+        subject_id,
+        attempted_action,
+    ]
+    event["integrity_hash"] = integrity.compute_integrity_hash(hash_fields)
+
+    logger.warning(f"Revocation access denied: {subject_type}/{subject_id} -> {attempted_action}")
+    return event

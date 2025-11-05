@@ -23,48 +23,46 @@ def handle_integration_request(payload: dict[str, Any]) -> dict[str, Any]:
         ValueError: If required fields are missing or invalid
     """
     # Generate correlation ID for tracking
-    corr_ctx = correlation.new_correlation_context()
-    corr_id = corr_ctx.trace_id
+    with correlation.new_correlation_context() as corr_id:
+        try:
+            # Validate payload
+            required_fields = ["name", "justification", "requestedTargets"]
+            for field in required_fields:
+                if field not in payload:
+                    raise ValueError(f"Missing required field: {field}")
 
-    try:
-        # Validate payload
-        required_fields = ["name", "justification", "requestedTargets"]
-        for field in required_fields:
-            if field not in payload:
-                raise ValueError(f"Missing required field: {field}")
+            if not isinstance(payload["requestedTargets"], list):
+                raise ValueError("requestedTargets must be a list")
 
-        if not isinstance(payload["requestedTargets"], list):
-            raise ValueError("requestedTargets must be a list")
+            if not payload["requestedTargets"]:
+                raise ValueError("requestedTargets cannot be empty")
 
-        if not payload["requestedTargets"]:
-            raise ValueError("requestedTargets cannot be empty")
+            # Create integration request
+            integration_id = integrations.request_integration(payload)
 
-        # Create integration request
-        integration_id = integrations.request_integration(payload)
+            # Emit audit event
+            event = evidence.construct_integration_request_event(
+                integration_id=integration_id,
+                name=payload["name"],
+                justification=payload["justification"],
+                requested_targets=payload["requestedTargets"],
+                correlation_id=corr_id,
+            )
+            logger.info(f"Integration request audit event: {event['id']}")
 
-        # Emit audit event
-        event = evidence.construct_integration_request_event(
-            integration_id=integration_id,
-            name=payload["name"],
-            justification=payload["justification"],
-            requested_targets=payload["requestedTargets"],
-            correlation_id=corr_id,
-        )
-        logger.info(f"Integration request audit event: {event['id']}")
+            return {
+                "integration_id": integration_id,
+                "status": "pending",
+                "message": "Integration request recorded",
+                "correlation_id": corr_id,
+            }
 
-        return {
-            "integration_id": integration_id,
-            "status": "pending",
-            "message": "Integration request recorded",
-            "correlation_id": corr_id,
-        }
-
-    except ValueError as e:
-        logger.error(f"Integration request validation failed: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Integration request failed: {e}")
-        raise
+        except ValueError as e:
+            logger.error(f"Integration request validation failed: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Integration request failed: {e}")
+            raise
 
 
 def handle_integration_approval(
@@ -86,64 +84,64 @@ def handle_integration_approval(
         ValueError: If integration not found or invalid
     """
     # Generate correlation ID for tracking
-    corr_ctx = correlation.new_correlation_context()
-    corr_id = corr_ctx.trace_id
+    with correlation.new_correlation_context() as corr_id:
+        try:
+            # Validate payload
+            if "approvedTargets" not in payload:
+                raise ValueError("Missing required field: approvedTargets")
 
-    try:
-        # Validate payload
-        if "approvedTargets" not in payload:
-            raise ValueError("Missing required field: approvedTargets")
+            if not isinstance(payload["approvedTargets"], list):
+                raise ValueError("approvedTargets must be a list")
 
-        if not isinstance(payload["approvedTargets"], list):
-            raise ValueError("approvedTargets must be a list")
+            approved_targets = payload["approvedTargets"]
+            expiry_days = payload.get("expiryDays")
 
-        approved_targets = payload["approvedTargets"]
-        expiry_days = payload.get("expiryDays")
+            if expiry_days is not None and (not isinstance(expiry_days, int) or expiry_days <= 0):
+                raise ValueError("expiryDays must be a positive integer")
 
-        if expiry_days is not None and (not isinstance(expiry_days, int) or expiry_days <= 0):
-            raise ValueError("expiryDays must be a positive integer")
+            # Check integration exists
+            integration = integrations.get_integration(integration_id)
+            if not integration:
+                raise ValueError(f"Integration not found: {integration_id}")
 
-        # Check integration exists
-        integration = integrations.get_integration(integration_id)
-        if not integration:
-            raise ValueError(f"Integration not found: {integration_id}")
+            # Approve integration
+            integrations.approve_integration(
+                integration_id=integration_id,
+                approved_targets=approved_targets,
+                expiry_days=expiry_days,
+                approved_by=approved_by,
+            )
 
-        # Approve integration
-        integrations.approve_integration(
-            integration_id=integration_id,
-            approved_targets=approved_targets,
-            expiry_days=expiry_days,
-            approved_by=approved_by,
-        )
+            # Emit audit event
+            event = evidence.construct_integration_approval_event(
+                integration_id=integration_id,
+                approved_by=approved_by,
+                approved_targets=approved_targets,
+                expiry_days=expiry_days,
+                correlation_id=corr_id,
+            )
+            logger.info(f"Integration approval audit event: {event['id']}")
 
-        # Emit audit event
-        event = evidence.construct_integration_approval_event(
-            integration_id=integration_id,
-            approved_by=approved_by,
-            approved_targets=approved_targets,
-            expiry_days=expiry_days,
-            correlation_id=corr_id,
-        )
-        logger.info(f"Integration approval audit event: {event['id']}")
+            # Retrieve updated integration
+            updated_integration = integrations.get_integration(integration_id)
 
-        # Retrieve updated integration
-        updated_integration = integrations.get_integration(integration_id)
+            return {
+                "integration_id": integration_id,
+                "status": "active",
+                "approved_targets": approved_targets,
+                "approved_by": approved_by,
+                "expires_at": updated_integration.get("expires_at")
+                if updated_integration
+                else None,
+                "correlation_id": corr_id,
+            }
 
-        return {
-            "integration_id": integration_id,
-            "status": "active",
-            "approved_targets": approved_targets,
-            "approved_by": approved_by,
-            "expires_at": updated_integration.get("expires_at") if updated_integration else None,
-            "correlation_id": corr_id,
-        }
-
-    except ValueError as e:
-        logger.error(f"Integration approval validation failed: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Integration approval failed: {e}")
-        raise
+        except ValueError as e:
+            logger.error(f"Integration approval validation failed: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Integration approval failed: {e}")
+            raise
 
 
 def handle_integration_get(integration_id: str) -> dict[str, Any]:
@@ -205,8 +203,8 @@ def check_integration_access(
         if correlation_id:
             corr_id = correlation_id
         else:
-            corr_ctx = correlation.new_correlation_context()
-            corr_id = corr_ctx.trace_id
+            with correlation.new_correlation_context() as corr_id:
+                pass  # Just get the correlation ID
         event = evidence.construct_integration_denial_event(
             integration_id=integration_id,
             target=target,

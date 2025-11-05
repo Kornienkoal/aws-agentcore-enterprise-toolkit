@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 
@@ -26,9 +27,20 @@ class CorrelationContext:
         return {"X-Correlation-Id": ";".join(parts)}
 
 
+@contextmanager
 def new_correlation_context(
     *, user: str | None = None, agent: str | None = None, tool: str | None = None
-) -> CorrelationContext:
-    """Create a new correlation context with a generated trace identifier."""
+):
+    """Create a new correlation context with a generated trace identifier.
+
+    Usage:
+        with new_correlation_context() as corr_id:
+            # Use corr_id for logging/tracing
+            pass
+
+    Yields:
+        Correlation trace_id (str)
+    """
     trace_id = uuid.uuid4().hex
-    return CorrelationContext(trace_id=trace_id, user=user, agent=agent, tool=tool)
+    ctx = CorrelationContext(trace_id=trace_id, user=user, agent=agent, tool=tool)
+    yield ctx.trace_id
