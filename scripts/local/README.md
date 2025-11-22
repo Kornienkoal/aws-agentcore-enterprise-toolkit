@@ -350,7 +350,7 @@ AGENTCORE_ENV=dev AWS_REGION=us-east-1 \
 
 | Feature | Streamlit UI | Local Runtime | Docker Container | Tool Tests |
 |---------|-------------|---------------|------------------|------------|
-| **Location** | `frontend/streamlit_app/main.py` | `run-agent-local.sh` | `run-agent-docker.sh` | `test-tools-local.sh` |
+| **Location** | `services/frontend_streamlit/main.py` | `run-agent-local.sh` | `run-agent-docker.sh` | `test-tools-local.sh` |
 | **Agent Runtime** | Deployed Lambda | Local Python | Docker Container | Mocked |
 | **Local Tools** | Deployed Lambda | Local Python | Docker Container | Local Python |
 | **Gateway Tools** | AWS Gateway | AWS Gateway | AWS Gateway | Mocked |
@@ -384,7 +384,7 @@ AGENTCORE_ENV=dev AWS_REGION=us-east-1 \
 ```bash
 # Start Streamlit UI
 AGENTCORE_ENV=dev AWS_REGION=us-east-1 \
-  uv run streamlit run frontend/streamlit_app/main.py
+  uv run streamlit run services/frontend_streamlit/main.py
 
 # Test with authentication and Gateway tools
 # (Use browser at http://localhost:8501)

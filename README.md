@@ -1,10 +1,10 @@
-# Amazon Bedrock AgentCore Template 🚀
+# AWS AgentCore Enterprise Toolkit 🚀
 
-Production-ready, agent-agnostic foundation for Amazon Bedrock AgentCore. Keep the shared infrastructure stable and reuse it across many agents; focus your time on prompts, tools, and UX.
+Production-ready, enterprise-grade infrastructure toolkit for Amazon Bedrock AgentCore. Keep the shared infrastructure stable and reuse it across many agents; focus your time on prompts, tools, and UX.
 
 ## Purpose
 
-This template gives teams a production-ready, agent-agnostic foundation for Amazon Bedrock AgentCore so you can:
+This enterprise toolkit provides teams with a production-ready, agent-agnostic foundation for Amazon Bedrock AgentCore so you can:
 
 - Reuse one shared, AWS-native infrastructure across unlimited agents
 - Start new proofs of concept in minutes with a clean, two-phase workflow (Terraform infra → agent code)
@@ -27,7 +27,7 @@ Follow the stage READMEs for a 10–15 minute quick start per stage:
 - Infrastructure (Terraform): `infrastructure/terraform/README.md`
 - Global MCP tools: `agents/global-tools/README.md`
 - Agent runtimes (customer_support & warranty_docs): `agents/README.md`
-- Frontend (Streamlit): `frontend/streamlit_app/README.md`
+- Frontend (Streamlit): `services/frontend_streamlit/README.md`
 
 Tip: The docs index lists all diagrams and stage guides: `docs/README.md`.
 

@@ -47,6 +47,17 @@ resource "aws_cognito_user_pool" "main" {
     required            = true
   }
 
+  schema {
+    name                = "allowed_agents"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+    string_attribute_constraints {
+      min_length = 0
+      max_length = 2048
+    }
+  }
+
   # Account recovery
   account_recovery_setting {
     recovery_mechanism {
@@ -127,7 +138,7 @@ resource "aws_cognito_user_pool_client" "frontend" {
   prevent_user_existence_errors = "ENABLED"
 
   # Read/write attributes
-  read_attributes  = ["email", "email_verified"]
+  read_attributes  = ["email", "email_verified", "custom:allowed_agents"]
   write_attributes = ["email"]
 }
 

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from frontend.streamlit_app.oauth_state import (
+from services.frontend_streamlit.oauth_state import (
     STATE_MAX_AGE_SECONDS,
     OAuthStateError,
     decode_oauth_state,
@@ -17,7 +17,7 @@ from frontend.streamlit_app.oauth_state import (
 @pytest.fixture
 def mock_config():
     """Provide a mocked configuration with a deterministic client secret."""
-    with patch("frontend.streamlit_app.oauth_state.load_config") as mock:
+    with patch("services.frontend_streamlit.oauth_state.load_config") as mock:
         config = MagicMock()
         config.cognito.client_secret = "test-client-secret"
         mock.return_value = config
@@ -50,12 +50,14 @@ class TestOAuthState:
     def test_decode_rejects_expired_payload(self, mock_config, monkeypatch):  # noqa: ARG002
         # Freeze time for encoding
         initial_time = 1_700_000_000
-        monkeypatch.setattr("frontend.streamlit_app.oauth_state.time.time", lambda: initial_time)
+        monkeypatch.setattr(
+            "services.frontend_streamlit.oauth_state.time.time", lambda: initial_time
+        )
         state_value = encode_oauth_state("verifier-abc")
 
         # Advance time beyond the allowed age
         monkeypatch.setattr(
-            "frontend.streamlit_app.oauth_state.time.time",
+            "services.frontend_streamlit.oauth_state.time.time",
             lambda: initial_time + STATE_MAX_AGE_SECONDS + 10,
         )
 

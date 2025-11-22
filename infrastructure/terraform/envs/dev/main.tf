@@ -25,7 +25,7 @@ provider "aws" {
   default_tags {
     tags = {
       Environment = "dev"
-      Project     = "AgentCore"
+      Project     = "AWS AgentCore Enterprise Toolkit"
       ManagedBy   = "Terraform"
     }
   }
@@ -36,7 +36,7 @@ locals {
   environment = "dev"
   tags = {
     Environment = local.environment
-    Project     = "AgentCore"
+    Project     = "AWS AgentCore Enterprise Toolkit"
     ManagedBy   = "Terraform"
   }
 }
@@ -121,4 +121,15 @@ module "tools" {
 
   gateway_ready_token = module.gateway.gateway_ready_token
   tools               = var.global_tools
+}
+
+# Frontend Gateway Module
+module "frontend_gateway" {
+  source = "../../modules/frontend-gateway"
+
+  environment          = local.environment
+  aws_region           = var.aws_region
+  cognito_user_pool_id = module.identity.pool_id
+  cognito_client_id    = module.identity.frontend_client_id
+  tags                 = local.tags
 }

@@ -9,7 +9,7 @@ import pytest
 
 sys.modules["streamlit"] = MagicMock()
 
-from frontend.streamlit_app.session import (  # noqa: E402
+from services.frontend_streamlit.session import (  # noqa: E402
     ChatMessage,
     SessionState,
     add_message,
@@ -26,7 +26,7 @@ from frontend.streamlit_app.session import (  # noqa: E402
 @pytest.fixture
 def mock_st():
     """Mock Streamlit session_state."""
-    with patch("frontend.streamlit_app.session.st") as mock:
+    with patch("services.frontend_streamlit.session.st") as mock:
         # Create a MagicMock that allows attribute assignment
         session_state_mock = MagicMock()
         session_state_mock.__setitem__ = MagicMock()

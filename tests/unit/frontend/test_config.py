@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from botocore.exceptions import ClientError
 
-from frontend.streamlit_app.config import (
+from services.frontend_streamlit.config import (
     AppConfig,
     CognitoConfig,
     get_ssm_parameter,
@@ -16,7 +16,7 @@ from frontend.streamlit_app.config import (
 @pytest.fixture
 def mock_ssm_client():
     """Mock boto3 SSM client."""
-    with patch("frontend.streamlit_app.config.boto3.client") as mock_client:
+    with patch("services.frontend_streamlit.config.boto3.client") as mock_client:
         yield mock_client.return_value
 
 
@@ -66,7 +66,7 @@ class TestLoadConfig:
     """Tests for configuration loading."""
 
     @patch.dict("os.environ", {"AGENTCORE_ENV": "dev", "AWS_REGION": "us-east-1"})
-    @patch("frontend.streamlit_app.config.get_ssm_parameter")
+    @patch("services.frontend_streamlit.config.get_ssm_parameter")
     def test_load_config_success(self, mock_get_param):
         """Test successful configuration loading."""
         # Clear cache
@@ -79,6 +79,7 @@ class TestLoadConfig:
             "/agentcore/dev/identity/frontend_client_secret": "secret123",
             "/agentcore/dev/identity/domain": "myapp",
             "/agentcore/dev/gateway/invoke_url": "https://api.example.com",
+            "/agentcore/dev/frontend-gateway/api_endpoint": "https://gateway.example.com",
         }
 
         # Mock function accepts but ignores with_decryption parameter
@@ -98,7 +99,7 @@ class TestLoadConfig:
         assert config.cognito.region == "us-east-1"
         assert config.gateway.invoke_url == "https://api.example.com"
 
-    @patch("frontend.streamlit_app.config.get_ssm_parameter")
+    @patch("services.frontend_streamlit.config.get_ssm_parameter")
     def test_load_config_missing_parameter(self, mock_get_param):
         """Test configuration loading with missing parameter."""
         load_config.cache_clear()

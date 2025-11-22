@@ -1,0 +1,25 @@
+
+flowchart LR
+  subgraph Browser
+    UI[Streamlit UI]
+  end
+
+  subgraph Cognito["Cognito Hosted UI"]
+    Pool[(User Pool)]
+    App[Frontend App Client]
+  end
+
+  subgraph Backend["Gateway Service (New Layer)"]
+    GWAPI["AuthN/Z + Agent Proxy\n(IAM Role for AgentCore)"]
+  end
+
+  subgraph AgentCore["AWS AgentCore"]
+    Runtime["Agent Runtime(s)"]
+    Control["Control Plane (list/describe)"]
+  end
+
+  UI -->|OAuth2 + PKCE| Cognito
+  Cognito -->|"ID/Access Tokens (claims: allowed agents)"| UI
+  UI -->|Bearer token| GWAPI
+  GWAPI -->|"SigV4 (IAM role)"| Control
+  GWAPI -->|invoke_agent_runtime| Runtime
