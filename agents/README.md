@@ -46,7 +46,7 @@ chmod 444 .bedrock_agentcore.yaml
 **Launch the Streamlit UI:**
 ```bash
 uv sync
-AGENTCORE_ENV=dev AWS_REGION=us-east-1 uv run streamlit run frontend/streamlit_app/main.py
+AGENTCORE_ENV=dev AWS_REGION=us-east-1 uv run streamlit run services/frontend_streamlit/main.py
 ```
 
 Select an agent from the sidebar and start chatting!
@@ -81,7 +81,7 @@ terraform apply  # Detects code changes and redeploys shared Lambda tools
 **Interactive Testing (Recommended):**
 ```bash
 # Launch Streamlit UI with full auth + Gateway tools
-AGENTCORE_ENV=dev AWS_REGION=us-east-1 uv run streamlit run frontend/streamlit_app/main.py
+AGENTCORE_ENV=dev AWS_REGION=us-east-1 uv run streamlit run services/frontend_streamlit/main.py
 ```
 
 **Unit Tests:**
@@ -265,6 +265,6 @@ uv run python -c "import yaml; yaml.safe_load(open('agent-config/customer-suppor
 
 - **Infrastructure**: `../infrastructure/terraform/README.md`
 - **Global tools**: `./global-tools/README.md`
-- **Frontend**: `../frontend/streamlit_app/README.md`
+- **Frontend**: `../services/frontend_streamlit/README.md`
 - **Developer Guide**: `./DEVELOPER_GUIDE.md` (detailed architecture, patterns, creating new agents)
 - **Contributing**: `../CONTRIBUTING.md`

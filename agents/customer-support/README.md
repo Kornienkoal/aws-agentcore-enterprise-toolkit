@@ -62,7 +62,7 @@ Agent: [Uses search_documentation tool]
 
 **Via Streamlit UI:**
 ```bash
-uv run streamlit run frontend/streamlit_app/main.py
+uv run streamlit run services/frontend_streamlit/main.py
 ```
 1. Authenticate with Cognito
 2. Select "Customer Support" from agent dropdown

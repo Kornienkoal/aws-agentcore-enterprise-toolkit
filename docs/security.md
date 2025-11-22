@@ -92,9 +92,9 @@ flowchart LR
 
 ## Where this appears in the code
 
-- UI tokens: `frontend/streamlit_app/auth.py`
+- UI tokens: `services/frontend_streamlit/auth.py`
   - Retrieves Access/ID/Refresh tokens from Cognito
-- UI → Runtime: `frontend/streamlit_app/runtime_client.py`
+- UI → Runtime: `services/frontend_streamlit/runtime_client.py`
   - Uses boto3 with SigV4 to call `bedrock-agentcore.invoke_agent_runtime`
   - Does not send `Authorization` (OAuth) header
 - Runtime → Gateway: `agents/customer-support/runtime.py`
@@ -166,5 +166,5 @@ flowchart LR
 
 - Repository conventions: `.github/copilot-instructions.md`
 - Tools and registration: `infrastructure/terraform/modules/tools/main.tf`
-- UI auth: `frontend/streamlit_app/auth.py`, `frontend/streamlit_app/main.py`
+- UI auth: `services/frontend_streamlit/auth.py`, `services/frontend_streamlit/main.py`
 - Runtime: `agents/customer-support/runtime.py`, `agents/warranty-docs/runtime.py`

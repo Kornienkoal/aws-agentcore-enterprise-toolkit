@@ -17,7 +17,7 @@ Identity (/agentcore/{env}/identity/*)
   - infrastructure/terraform/modules/identity/outputs.tf — writes pool_id, machine_client_id, client_secret (SecureString), frontend_client_id, frontend_client_secret (SecureString), domain
 - Consumers:
   - infrastructure/terraform/custom-resources/agentcore-gateway/lambda_function.py — reads pool_id, machine_client_id
-  - frontend/streamlit_app/config.py — reads pool_id, frontend_client_id, frontend_client_secret (SecureString), domain
+  - services/frontend_streamlit/config.py — reads pool_id, frontend_client_id, frontend_client_secret (SecureString), domain
   - agent-config/customer-support.yaml — reads pool_id, machine_client_id, client_secret, domain
   - scripts/infra/validate.sh — validates presence of identity parameters
   - tests/unit/frontend/test_config.py — mocks identity params
@@ -28,7 +28,7 @@ Gateway (/agentcore/{env}/gateway/*)
   - infrastructure/terraform/custom-resources/agentcore-gateway/lambda_function.py — writes gateway_id, gateway_arn, invoke_url, role_arn
 - Consumers:
   - infrastructure/terraform/modules/gateway/outputs.tf — data sources for invoke_url
-  - frontend/streamlit_app/config.py — reads invoke_url
+  - services/frontend_streamlit/config.py — reads invoke_url
   - agent-config/customer-support.yaml — api_url via ${SSM:/agentcore/dev/gateway/invoke_url}
   - scripts/infra/validate.sh — validates presence of gateway parameters
 - Status: OK

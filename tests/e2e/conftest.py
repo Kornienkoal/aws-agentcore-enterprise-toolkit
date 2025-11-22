@@ -44,7 +44,7 @@ def ensure_streamlit_running() -> Generator[None]:
         "run",
         "streamlit",
         "run",
-        "frontend/streamlit_app/main.py",
+        "services/frontend_streamlit/main.py",
         "--server.port",
         "8501",
         "--server.headless",

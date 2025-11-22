@@ -14,8 +14,10 @@ if str(project_root) not in sys.path:
 
 import streamlit as st  # noqa: E402
 import streamlit.components.v1 as components  # noqa: E402
+import requests  # noqa: E402
 
-from frontend.streamlit_app.auth import (  # noqa: E402
+from services.frontend_streamlit.config import load_config  # noqa: E402
+from services.frontend_streamlit.auth import (  # noqa: E402
     build_authorization_url,
     build_logout_url,
     decode_id_token,
@@ -23,21 +25,21 @@ from frontend.streamlit_app.auth import (  # noqa: E402
     generate_pkce_pair,
     refresh_access_token,
 )
-from frontend.streamlit_app.components import (  # noqa: E402
+from services.frontend_streamlit.components import (  # noqa: E402
     render_auth_status,
     render_chat_interface,
     render_error,
     render_header,
     render_login_button,
 )
-from frontend.streamlit_app.oauth_state import (  # noqa: E402
+from services.frontend_streamlit.oauth_state import (  # noqa: E402
     OAuthStateError,
     decode_oauth_state,
     encode_oauth_state,
 )
-from frontend.streamlit_app.runtime_client import get_runtime_client  # noqa: E402
-from frontend.streamlit_app.runtime_client_local import get_local_runtime_client  # noqa: E402
-from frontend.streamlit_app.session import (  # noqa: E402
+from services.frontend_streamlit.runtime_client import get_runtime_client  # noqa: E402
+from services.frontend_streamlit.runtime_client_local import get_local_runtime_client  # noqa: E402
+from services.frontend_streamlit.session import (  # noqa: E402
     add_message,
     ensure_agent_session,
     get_session_id,
@@ -85,12 +87,56 @@ AVAILABLE_AGENTS = [
 ]
 
 
+@st.cache_data(ttl=300)
+def fetch_agents(access_token: str) -> list[dict]:
+    """Fetch available agents from the Frontend Gateway."""
+    if LOCAL_MODE:
+        return AVAILABLE_AGENTS
+
+    try:
+        config = load_config()
+        # Ensure URL doesn't end with slash to avoid double slash
+        base_url = config.frontend_gateway_url.rstrip('/')
+        url = f"{base_url}/agents"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        
+        response = requests.get(url, headers=headers, timeout=5)
+        response.raise_for_status()
+        
+        data = response.json()
+        return data.get("agents", [])
+    except Exception as e:
+        logger.error(f"Failed to fetch agents: {e}")
+        return []
+
+
 def render_agent_selector() -> None:
     """Render agent selection dropdown and maintain per-agent state."""
 
+    state = get_session_state()
+    
+    # In local mode, we might not have a token, but we have AVAILABLE_AGENTS
+    if LOCAL_MODE:
+        agents = AVAILABLE_AGENTS
+    elif state.authenticated and state.id_token:
+        agents = fetch_agents(state.id_token)
+    else:
+        # Not authenticated yet, cannot fetch agents
+        return
+
+    if not agents:
+        if state.authenticated:
+            st.sidebar.warning("No agents available.")
+        return
+
     # Initialize selected agent in session state if not set
     if "selected_agent" not in st.session_state:
-        st.session_state.selected_agent = AVAILABLE_AGENTS[0]["id"]
+        st.session_state.selected_agent = agents[0]["id"]
+    
+    # Ensure selected agent is valid (in case list changed)
+    agent_ids = [a["id"] for a in agents]
+    if st.session_state.selected_agent not in agent_ids:
+        st.session_state.selected_agent = agents[0]["id"]
 
     ensure_agent_session(st.session_state.selected_agent)
 
@@ -99,7 +145,7 @@ def render_agent_selector() -> None:
         st.markdown("### Agent Selection")
 
         agent_options = {
-            agent["id"]: f"{agent['name']} - {agent['description']}" for agent in AVAILABLE_AGENTS
+            agent["id"]: f"{agent['name']} - {agent.get('description', '')}" for agent in agents
         }
 
         selected = st.selectbox(

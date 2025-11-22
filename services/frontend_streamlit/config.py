@@ -52,6 +52,7 @@ class AppConfig:
 
     cognito: CognitoConfig
     gateway: GatewayConfig
+    frontend_gateway_url: str
     environment: str
 
 
@@ -111,6 +112,9 @@ def load_config() -> AppConfig:
 
         # Fetch API Gateway configuration
         invoke_url = get_ssm_parameter(f"{base_path}/gateway/invoke_url")
+        
+        # Fetch Frontend Gateway configuration
+        frontend_gateway_url = get_ssm_parameter(f"{base_path}/frontend-gateway/api_endpoint")
 
         return AppConfig(
             cognito=CognitoConfig(
@@ -121,6 +125,7 @@ def load_config() -> AppConfig:
                 region=region,
             ),
             gateway=GatewayConfig(invoke_url=invoke_url),
+            frontend_gateway_url=frontend_gateway_url,
             environment=environment,
         )
     except RuntimeError as e:

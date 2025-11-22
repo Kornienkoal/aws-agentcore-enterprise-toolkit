@@ -55,7 +55,7 @@ dev = [
 members = [
     "packages/*",        # Shared libraries
     "agents/*",          # Agent implementations
-    "frontend/*",        # Frontend applications (Streamlit UI)
+    "services/frontend_streamlit",        # Frontend applications (Streamlit UI)
 ]
 
 [tool.uv.sources]

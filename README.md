@@ -27,7 +27,7 @@ Follow the stage READMEs for a 10–15 minute quick start per stage:
 - Infrastructure (Terraform): `infrastructure/terraform/README.md`
 - Global MCP tools: `agents/global-tools/README.md`
 - Agent runtimes (customer_support & warranty_docs): `agents/README.md`
-- Frontend (Streamlit): `frontend/streamlit_app/README.md`
+- Frontend (Streamlit): `services/frontend_streamlit/README.md`
 
 Tip: The docs index lists all diagrams and stage guides: `docs/README.md`.
 
