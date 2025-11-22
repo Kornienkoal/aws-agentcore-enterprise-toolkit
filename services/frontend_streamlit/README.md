@@ -54,7 +54,7 @@ flowchart LR
 ```bash
 # From repo root
 uv sync
-uv run streamlit run frontend/streamlit_app/main.py
+uv run streamlit run services/frontend_streamlit/main.py
 ```
 
 Environment hints:
@@ -64,7 +64,7 @@ Environment hints:
 ## Project structure
 
 ```
-frontend/streamlit_app/
+services/frontend_streamlit/
 ├── main.py         # UI entrypoint
 ├── auth.py         # Cognito (OAuth2 + PKCE)
 ├── runtime_client.py  # AgentCore runtime client

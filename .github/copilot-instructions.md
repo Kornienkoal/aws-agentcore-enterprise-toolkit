@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions — Bedrock AgentCore Template
+# GitHub Copilot Instructions — AWS AgentCore Enterprise Toolkit
 
 Purpose: Give AI coding agents the minimum, project‑specific context to be productive in this repository. Keep answers concrete, scoped to this codebase, and bias to AWS‑native + Terraform.
 
@@ -20,7 +20,7 @@ Where things live (entry points that matter)
 - Infra: infrastructure/terraform/{modules,envs/*} with custom resources under modules and tests under custom-resources
 - Tools (MCP on Gateway): agents/global-tools/{check_warranty,web_search}/ with tool-schema.json and lambda_function.py
 - Agent runtime: agents/customer-support/runtime.py (BedrockAgentCoreApp + Strands, uses MCPClient for Gateway tools) and agents/customer-support/tools/product_tools.py (local tools)
-- Frontend: frontend/streamlit_app/{main.py,auth.py,runtime_client.py,config.py}
+- Frontend: services/frontend_streamlit/{main.py,auth.py,runtime_client.py,config.py}
 - Shared libs: packages/agentcore-common (config, auth, observability), packages/agentcore-tools
 
 First run (clean account; nothing provisioned)
@@ -30,7 +30,7 @@ First run (clean account; nothing provisioned)
 2) Global tools are packaged by Terraform; confirm Gateway Targets exist and tool Lambdas log invocations
 3) Backend/dev loop
   - uv sync; uv run pytest tests -v; optional: uv run ruff check .
-  - Run the Streamlit UI: uv run streamlit run frontend/streamlit_app/main.py (env: AGENTCORE_ENV=dev, AWS_REGION=us-east-1)
+  - Run the Streamlit UI: uv run streamlit run services/frontend_streamlit/main.py (env: AGENTCORE_ENV=dev, AWS_REGION=us-east-1)
 
 Conventions and patterns (project‑specific)
 - Infra is Terraform‑only; application code must not create AWS resources. All discovery is via SSM /agentcore/{env}/*.
@@ -66,6 +66,6 @@ Useful files to cite in answers
 - agent-config/customer-support.yaml (shows ${SSM:...} and allowed tools)
 - agents/global-tools/*/tool-schema.json and lambda_function.py
 - infrastructure/terraform/README.md and envs/dev/* for exact infra steps
-- frontend/streamlit_app/README.md for UI run instructions
+- services/frontend_streamlit/README.md for UI run instructions
 
 If anything is unclear or missing for your current task (e.g., exact tfvars shape for global_tools, or CloudWatch dashboard names), ask to update the stage README and we’ll patch it in this repo.

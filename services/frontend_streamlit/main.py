@@ -12,10 +12,11 @@ project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+import requests  # noqa: E402
 import streamlit as st  # noqa: E402
 import streamlit.components.v1 as components  # noqa: E402
 
-from frontend.streamlit_app.auth import (  # noqa: E402
+from services.frontend_streamlit.auth import (  # noqa: E402
     build_authorization_url,
     build_logout_url,
     decode_id_token,
@@ -23,21 +24,22 @@ from frontend.streamlit_app.auth import (  # noqa: E402
     generate_pkce_pair,
     refresh_access_token,
 )
-from frontend.streamlit_app.components import (  # noqa: E402
+from services.frontend_streamlit.components import (  # noqa: E402
     render_auth_status,
     render_chat_interface,
     render_error,
     render_header,
     render_login_button,
 )
-from frontend.streamlit_app.oauth_state import (  # noqa: E402
+from services.frontend_streamlit.config import load_config  # noqa: E402
+from services.frontend_streamlit.oauth_state import (  # noqa: E402
     OAuthStateError,
     decode_oauth_state,
     encode_oauth_state,
 )
-from frontend.streamlit_app.runtime_client import get_runtime_client  # noqa: E402
-from frontend.streamlit_app.runtime_client_local import get_local_runtime_client  # noqa: E402
-from frontend.streamlit_app.session import (  # noqa: E402
+from services.frontend_streamlit.runtime_client import get_runtime_client  # noqa: E402
+from services.frontend_streamlit.runtime_client_local import get_local_runtime_client  # noqa: E402
+from services.frontend_streamlit.session import (  # noqa: E402
     add_message,
     ensure_agent_session,
     get_session_id,
@@ -85,12 +87,75 @@ AVAILABLE_AGENTS = [
 ]
 
 
+@st.cache_data(ttl=300)
+def fetch_agents(
+    access_token: str,
+    user_id: str,  # noqa: ARG001 - Used as cache key to scope by user
+) -> list[dict[str, str]]:
+    """Fetch available agents from the Frontend Gateway.
+
+    Note: access_token and user_id are both cache key parameters. Using user_id
+    instead of access_token alone prevents memory bloat when tokens are refreshed.
+
+    Args:
+        access_token: JWT token for authentication
+        user_id: User identifier for cache keying (not used in function body)
+
+    Returns:
+        List of available agent dictionaries
+    """
+    if LOCAL_MODE:
+        return AVAILABLE_AGENTS
+
+    try:
+        config = load_config()
+        # Ensure URL doesn't end with slash to avoid double slash
+        base_url = config.frontend_gateway_url.rstrip("/")
+        url = f"{base_url}/agents"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        response = requests.get(url, headers=headers, timeout=5)
+        response.raise_for_status()
+
+        data = response.json()
+        return data.get("agents", [])
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to fetch agents from Gateway: {e}", exc_info=True)
+        st.error(f"Unable to connect to agent service: {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Unexpected error fetching agents: {e}", exc_info=True)
+        st.error("An unexpected error occurred while loading agents")
+        return []
+
+
 def render_agent_selector() -> None:
     """Render agent selection dropdown and maintain per-agent state."""
 
+    state = get_session_state()
+
+    # In local mode, we might not have a token, but we have AVAILABLE_AGENTS
+    if LOCAL_MODE:
+        agents = AVAILABLE_AGENTS
+    elif state.authenticated and state.id_token:
+        agents = fetch_agents(state.id_token, state.user_id or "unknown")
+    else:
+        # Not authenticated yet, cannot fetch agents
+        return
+
+    if not agents:
+        if state.authenticated:
+            st.sidebar.warning("No agents available.")
+        return
+
     # Initialize selected agent in session state if not set
     if "selected_agent" not in st.session_state:
-        st.session_state.selected_agent = AVAILABLE_AGENTS[0]["id"]
+        st.session_state.selected_agent = agents[0]["id"]
+
+    # Ensure selected agent is valid (in case list changed)
+    agent_ids = [a["id"] for a in agents]
+    if st.session_state.selected_agent not in agent_ids:
+        st.session_state.selected_agent = agents[0]["id"]
 
     ensure_agent_session(st.session_state.selected_agent)
 
@@ -98,9 +163,10 @@ def render_agent_selector() -> None:
     with st.sidebar:
         st.markdown("### Agent Selection")
 
-        agent_options = {
-            agent["id"]: f"{agent['name']} - {agent['description']}" for agent in AVAILABLE_AGENTS
-        }
+        agent_options = {}
+        for agent in agents:
+            description = agent.get("description") or f"Agent {agent['name']}"
+            agent_options[agent["id"]] = f"{agent['name']} - {description}"
 
         selected = st.selectbox(
             "Choose an agent:",

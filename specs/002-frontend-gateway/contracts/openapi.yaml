@@ -1,0 +1,97 @@
+openapi: 3.0.0
+info:
+  title: Frontend Gateway API
+  version: 1.0.0
+  description: Authorization-aware gateway for Bedrock AgentCore.
+
+paths:
+  /agents:
+    get:
+      summary: List authorized agents
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentListResponse'
+        '401':
+          description: Unauthorized
+
+  /agents/{agentId}/invoke:
+    post:
+      summary: Invoke an agent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvocationRequest'
+      responses:
+        '200':
+          description: Agent response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  output:
+                    type: string
+                  sessionId:
+                    type: string
+                  userId:
+                    type: string
+        '403':
+          description: Forbidden (Agent not allowed)
+        '502':
+          description: AgentCore Runtime Error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    InvocationRequest:
+      type: object
+      required:
+        - message
+        - sessionId
+        - userId
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: string
+        userId:
+          type: string
+
+    AgentListResponse:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentDescriptor'
+
+    AgentDescriptor:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string

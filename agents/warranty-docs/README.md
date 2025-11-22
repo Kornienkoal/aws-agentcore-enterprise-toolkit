@@ -127,7 +127,7 @@ Agent: [May use web-search Gateway tool if internal docs insufficient]
 
 **Via Streamlit UI:**
 ```bash
-uv run streamlit run frontend/streamlit_app/main.py
+uv run streamlit run services/frontend_streamlit/main.py
 ```
 1. Authenticate with Cognito
 2. Select "Warranty & Docs" from agent dropdown

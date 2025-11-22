@@ -27,6 +27,42 @@ terraform plan -out plan.tfplan
 terraform apply plan.tfplan
 ```
 
+## Frontend Gateway & Streamlit
+
+After deployment, the Frontend Gateway URL and Cognito details are stored in SSM. To run the Streamlit frontend locally:
+
+```bash
+# From repo root
+uv run streamlit run services/frontend_streamlit/main.py
+```
+
+The application will automatically fetch configuration from SSM:
+- Gateway URL: `/agentcore/{env}/frontend-gateway/api_endpoint`
+- Cognito Pool: `/agentcore/{env}/identity/pool_id`
+- Client ID: `/agentcore/{env}/identity/frontend_client_id`
+
+## Checking Existing Stack
+
+If the stack is already deployed, you can verify the configuration by checking the SSM parameters.
+
+**Verify Frontend Gateway URL:**
+```bash
+aws ssm get-parameter --name /agentcore/dev/frontend-gateway/api_endpoint
+```
+
+**Verify Cognito Configuration:**
+```bash
+aws ssm get-parameters --names \
+  /agentcore/dev/identity/pool_id \
+  /agentcore/dev/identity/frontend_client_id \
+  /agentcore/dev/identity/domain
+```
+
+**Verify Agent Runtime Config:**
+```bash
+aws ssm get-parameters-by-path --path /agentcore/dev/runtime/ --recursive
+```
+
 ## What gets deployed
 
 - Identity (Cognito)
@@ -54,6 +90,12 @@ terraform apply plan.tfplan
 - Tools (Global MCP tool Lambdas + Gateway Target registration)
 	- One Lambda per tool (`{namespace}-{tool}-tool-{env}`), X-Ray + CW logs (default tools: `check_warranty`, `service_locator`, `web_search`)
 	- Custom Resource Lambda to register/update Gateway Targets for each tool using the Gateway ID from SSM
+
+- Frontend Gateway (HTTP API + Lambda)
+	- API Gateway (HTTP API) exposing the agent runtime
+	- Lambda function handling requests and invoking the agent runtime
+	- Cognito Authorizer for secure access
+	- SSM: `/agentcore/{env}/frontend-gateway/*` (api_endpoint)
 
 ## IAM highlights (least privilege)
 
@@ -172,13 +214,14 @@ graph TD
 - Check CloudWatch dashboard and alarms (observability module)
 
 ## Troubleshooting
--## FAQs
 
-- Q: Why are some IAM resources scoped with wildcards?
-	- A: ECR authorization and Bedrock control-plane actions require broader scopes today. We document each case and tighten as AWS supports granular ARNs/conditions.
-- Q: Where do agents read configuration from?
-	- A: SSM Parameter Store under `/agentcore/{env}/*` populated by Terraform and custom resources.
+- **Gateway custom resource fails with ParameterNotFound/AccessDenied for identity**: Ensure identity module was applied and that the provisioner reads from `/agentcore/{env}/identity/*`.
+- **Memory semantic strategy errors**: Requires Bedrock embedding model access in the provisioner role.
 
+## FAQs
 
-- Gateway custom resource fails with ParameterNotFound/AccessDenied for identity: ensure identity module was applied and that the provisioner reads from `/agentcore/{env}/identity/*` (fixed in this repo).
-- Memory semantic strategy requires Bedrock embedding model access in the provisioner role.
+- **Q: Why are some IAM resources scoped with wildcards?**
+  - A: ECR authorization and Bedrock control-plane actions require broader scopes today. We document each case and tighten as AWS supports granular ARNs/conditions.
+
+- **Q: Where do agents read configuration from?**
+  - A: SSM Parameter Store under `/agentcore/{env}/*` populated by Terraform and custom resources.

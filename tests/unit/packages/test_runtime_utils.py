@@ -100,6 +100,7 @@ class TestAgentRuntime:
             assert callable(invoke)
 
     @pytest.mark.asyncio
+    @pytest.mark.skip_precommit
     async def test_invoke_handler_basic_flow(self, mock_config):
         """Invoke handler should process basic requests."""
         from agentcore_tools.runtime import AgentRuntime
@@ -118,11 +119,11 @@ class TestAgentRuntime:
             runtime = AgentRuntime("test-agent")
             invoke = runtime.create_invoke_handler([test_tool])
 
-            result = await invoke({"prompt": "test question"})
-
+            result = await invoke({"prompt": "test question"}, context=MagicMock())
             assert "test question" in result
 
     @pytest.mark.asyncio
+    @pytest.mark.skip_precommit
     async def test_invoke_handler_with_gateway(self, mock_config):
         """Invoke handler should load gateway tools when available."""
         from agentcore_tools.runtime import AgentRuntime
@@ -155,7 +156,6 @@ class TestAgentRuntime:
             invoke = runtime.create_invoke_handler([test_tool])
 
             await invoke({"prompt": "test"}, context=MagicMock())
-
             # MCP client should have been called
             mock_mcp_client.list_tools_sync.assert_called_once()
 

@@ -144,7 +144,7 @@ Create `agent-config/<agent-name>.yaml` with `${SSM:...}` placeholders for Gatew
 
 ### Phase 5 – Frontend integration
 
-Add the new agent to `frontend/streamlit_app/main.py` (`AVAILABLE_AGENTS`), provide a README, and surface documentation in `docs/` if needed.
+Add the new agent to `services/frontend_streamlit/main.py` (`AVAILABLE_AGENTS`), provide a README, and surface documentation in `docs/` if needed.
 
 ### Phase 6 – Testing & docs
 
@@ -237,7 +237,7 @@ uv sync                         # install project deps
 
 | Method                      | Command / Script                                      | Notes |
 |-----------------------------|-------------------------------------------------------|-------|
-| Streamlit UI                | `AGENTCORE_ENV=dev AWS_REGION=us-east-1 uv run streamlit run frontend/streamlit_app/main.py` | Full stack, auth required |
+| Streamlit UI                | `AGENTCORE_ENV=dev AWS_REGION=us-east-1 uv run streamlit run services/frontend_streamlit/main.py` | Full stack, auth required |
 | Local dev helper            | `./scripts/local/start-local-dev.sh <agent-id>`       | Fast inner loop, spins up UI + runtime |
 | Runtime (no UI)             | `./scripts/local/run-agent-local.sh <agent-id> "Prompt"` | Helpful for debugging stdout logs |
 | Docker smoke test           | `./scripts/local/run-agent-docker.sh <agent-id> "Prompt"` | Matches Lambda base image |
@@ -289,7 +289,7 @@ uv run pytest tests/ -v
 
 - [`agents/README.md`](./README.md) – quick start and operator view
 - [`infrastructure/terraform/README.md`](../infrastructure/terraform/README.md) – module details
-- [`frontend/streamlit_app/README.md`](../frontend/streamlit_app/README.md) – UI customisation
+- [`services/frontend_streamlit/README.md`](../services/frontend_streamlit/README.md) – UI customisation
 - [`documents in agents/global-tools/`](./global-tools) – individual tool implementations
 
 _Last updated: 2025-10-29_

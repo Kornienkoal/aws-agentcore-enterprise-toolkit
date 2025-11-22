@@ -7,7 +7,7 @@ Lightweight index to the definitive, stage-focused docs and diagrams.
 - Agents (Multi-agent architecture, Gateway tools, and agent creation): `../agents/README.md`
   - Customer Support Agent: `../agents/customer-support/README.md`
   - Warranty & Docs Agent: `../agents/warranty-docs/README.md`
-- Frontend (Streamlit): `../frontend/streamlit_app/README.md`
+- Frontend (Streamlit): `../services/frontend_streamlit/README.md`
 
 ## Diagrams
 - Infra Overview: `diagrams/infra-overview.mmd`

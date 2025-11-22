@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from frontend.streamlit_app.auth import (
+from services.frontend_streamlit.auth import (
     build_authorization_url,
     build_logout_url,
     decode_id_token,
@@ -18,7 +18,7 @@ from frontend.streamlit_app.auth import (
 @pytest.fixture
 def mock_config():
     """Mock application configuration."""
-    with patch("frontend.streamlit_app.auth.load_config") as mock:
+    with patch("services.frontend_streamlit.auth.load_config") as mock:
         config = MagicMock()
         config.cognito.client_id = "test-client-id"
         config.cognito.client_secret = "test-client-secret"
@@ -87,7 +87,7 @@ class TestAuthorizationURL:
 class TestTokenExchange:
     """Tests for OAuth2 token exchange."""
 
-    @patch("frontend.streamlit_app.auth.requests.post")
+    @patch("services.frontend_streamlit.auth.requests.post")
     def test_exchange_code_success(self, mock_post, mock_config):  # noqa: ARG002
         """Test successful token exchange."""
         mock_response = MagicMock()
@@ -120,7 +120,7 @@ class TestTokenExchange:
         assert call_kwargs["data"]["code"] == "code123"
         assert call_kwargs["data"]["code_verifier"] == "verifier123"
 
-    @patch("frontend.streamlit_app.auth.requests.post")
+    @patch("services.frontend_streamlit.auth.requests.post")
     def test_exchange_code_http_error(self, mock_post, mock_config):  # noqa: ARG002
         """Test token exchange with HTTP error."""
         mock_response = MagicMock()
@@ -136,7 +136,7 @@ class TestTokenExchange:
                 redirect_uri="http://localhost:8501",
             )
 
-    @patch("frontend.streamlit_app.auth.requests.post")
+    @patch("services.frontend_streamlit.auth.requests.post")
     def test_exchange_code_network_error(self, mock_post, mock_config):  # noqa: ARG002
         """Test token exchange with network error."""
         mock_post.side_effect = requests.RequestException("Network error")
@@ -152,7 +152,7 @@ class TestTokenExchange:
 class TestTokenRefresh:
     """Tests for token refresh."""
 
-    @patch("frontend.streamlit_app.auth.requests.post")
+    @patch("services.frontend_streamlit.auth.requests.post")
     def test_refresh_success(self, mock_post, mock_config):  # noqa: ARG002
         """Test successful token refresh."""
         mock_response = MagicMock()
@@ -170,7 +170,7 @@ class TestTokenRefresh:
         assert tokens.id_token == "new-id"
         assert tokens.refresh_token == "refresh123"  # Should use original if not returned
 
-    @patch("frontend.streamlit_app.auth.requests.post")
+    @patch("services.frontend_streamlit.auth.requests.post")
     def test_refresh_failure(self, mock_post, mock_config):  # noqa: ARG002
         """Test token refresh failure."""
         mock_response = MagicMock()
@@ -184,7 +184,7 @@ class TestTokenRefresh:
 class TestTokenDecoding:
     """Tests for ID token decoding."""
 
-    @patch("frontend.streamlit_app.auth.jwt.decode")
+    @patch("services.frontend_streamlit.auth.jwt.decode")
     def test_decode_id_token(self, mock_decode):
         """Test decoding ID token claims."""
         mock_decode.return_value = {
