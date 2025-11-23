@@ -8,6 +8,12 @@ graph TD
     FE["Frontend Client (code + PKCE)"]
   end
 
+  subgraph FrontendGW [Frontend Gateway]
+    FEGW["API Gateway (HTTP)"]
+    FELambda["Auth/Proxy Lambda"]
+    FERole["Lambda IAM Role"]
+  end
+
   subgraph Gateway [Bedrock AgentCore Gateway]
     GW[("Gateway")]
     GRole[Gateway IAM Role]
@@ -34,6 +40,10 @@ graph TD
 
   UP --> M2M
   UP --> FE
+  FE -->|JWT| FEGW
+  FEGW --> FELambda
+  FELambda -->|Validate| UP
+  FERole -->|InvokeAgentRuntime| RRole
 
   RRole -->|Invoke| GW
   GW -->|Invoke Tool| T1
@@ -42,11 +52,13 @@ graph TD
   RRole -->|Read| MEM
 
   RRole --> Logs
+  FELambda --> CW
   T1 --> CW
   T2 --> CW
   GW --> CW
 
   RRole --> XR
+  FELambda --> XR
   T1 --> XR
   T2 --> XR
   GW --> XR
